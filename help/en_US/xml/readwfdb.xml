@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.readwfdb</keyword>
+  <short_description>Read an ECG recording stored in the WFDB format.</short_description>
+  <syntax>
+    <syntax_item>recording = ecglab.readwfdb(name)</syntax_item>
+    <syntax_item>recording = ecglab.readwfdb(name, 'Annotations', which)</syntax_item>
+    <syntax_item>recording = ecglab.readwfdb(name, 'Leads', leads)</syntax_item>
+    <syntax_item>recording = ecglab.readwfdb(name, 'Physical', false)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>name</param_name>
+      <param_description>the record, with or without its .hea extension.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>which</param_name>
+      <param_description>'auto' reads name.atr when it is there; an extension reads name.extension; a file path reads that file; false reads none.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>leads</param_name>
+      <param_description>names or indices of the leads to keep, in the order asked.</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>recording</param_name>
+      <param_description>the recording struct every reader of the module returns, with the samples in physical units, the leads, the annotations, and the gain and baseline per lead for a round trip.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>The open databases of annotated electrocardiograms are kept in WFDB, and a laboratory that cannot read them cannot be measured against them.</p>
+    <p>The header is text: one line for the record, then one line for each signal, naming the file it lives in, how it is packed, and the gain and the baseline that turn a stored integer back into a physical value. Reading that field wrongly gives a signal that looks entirely plausible and is wrong, so it is worth saying what it holds: a gain, an optional baseline in brackets, and an optional unit after a slash. The physical value is <b>(stored - baseline) / gain</b>, the baseline defaulting to the ADC zero.</p>
+    <p>Every signal format the databases use is read: 8 (first differences), 16 and 61 (sixteen bit, least and most significant byte first), 24 and 32 (signed, least significant byte first), 80 and 160 (offset binary, eight and sixteen bit), 212 (two twelve bit samples in three bytes), and 310 and 311 (three ten bit samples in four bytes, the two packings). A plus sign after the format carries a byte offset, an x carries the samples per frame of a multi-frequency signal, signals may spread over several files, and a record may be cut into segments. A compressed (FLAC) format is refused by name rather than misread.</p>
+    <p>A multi-frequency record is returned with every lead at the highest rate, each slower lead held across the frame, with <b>info.multiFrequency</b> true and <b>info.frameRate</b> kept. A multi-segment record is stitched back into one matrix, a null segment becoming NaN of its length so the timeline is not shortened.</p>
+    <p>Annotations are sixteen bit words: the top six bits say what the mark is and the low ten how far since the last one. A gap too large for ten bits is carried in the two words after a skip code, the high half first and signed, so a reader that skips that shifts every mark after it. The marks come back in <b>recording.annotations</b> with the PhysioNet mnemonic as the symbol and the sample one-based, a mark at file time t landing at sample t + 1.</p>
+  </description>
+  <used_function />
+  <bibliography>Goldberger et al., PhysioBank, PhysioToolkit, and PhysioNet, Circulation 101(23), 2000. Moody and Mark, The impact of the MIT-BIH Arrhythmia Database, IEEE Eng. in Med. and Biol. 20(3), 2001.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% A record of the arrhythmia database, read and its beats detected.
+recording = ecglab.readwfdb('100');
+disp(recording.leads)
+disp(numel(recording.annotations.sample))]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.writewfdb">ecglab.writewfdb</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

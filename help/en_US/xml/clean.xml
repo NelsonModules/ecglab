@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.clean</keyword>
+  <short_description>Remove baseline wander and mains interference.</short_description>
+  <syntax>
+    <syntax_item>clean = ecglab.clean(X)</syntax_item>
+    <syntax_item>clean = ecglab.clean(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>an ecglab.recording (every lead is cleaned) or a plain signal vector in millivolts whose sampling rate is given as Rate.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: Baseline (the baseline method, 'highpass' by default, also 'median', 'spline' or 'none'), BaselineCut (the high-pass edge in hertz, default 0.5), Mains ('auto' by default, or 50, 60 or false), MainsThreshold (how far above the neighbouring harmonics the mains line must stand for 'auto' to remove it, default 3), MainsQ (the quality factor of the notch, default 35), MainsHarmonics (true by default, also notches the harmonics up to the Nyquist), Lead (the leads to clean, names or column indices, default all; the leads left out pass through unchanged), Rate (the sampling rate in hertz, required when X is a vector).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>clean</param_name>
+      <param_description>the same shape as X: an ecglab.recording with the same fields and the samples replaced, or a vector in the orientation it came. A recording carries clean.info.cleaning, a struct with baseline (the method and the cut in hertz, NaN when the method has no cut), mains (the frequency removed or 0), and baselineRemoved (the RMS in millivolts of what the baseline stage subtracted, per lead, 0 for a lead left out).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Two things corrupt a surface electrocardiogram that the heart did not put there: the slow baseline wander of breathing and electrode drift, well below the heart rate, and the mains hum of the power line at 50 or 60 Hz. Both are removed without moving the QRS peak or tilting the ST segment, because a clinician reads the ST level and a detector reads the R peak.</p>
+    <p>The high pass ('highpass') is a second-order Butterworth high pass at BaselineCut, applied forwards and backwards with filtfilt so it is ZERO PHASE. A causal high pass at 0.5 Hz would lag the low frequencies and tilt the ST segment, which is why a diagnostic recording refuses one; the AHA recommendation allows a linear-phase high pass up to 0.67 Hz, and filtfilt is linear phase, so the ST level is preserved. Measured: 0.003 mV of ST shift on a 0.5 mV, 0.2 Hz wander, and 0.1 s to run on a 30 minute record at 360 Hz.</p>
+    <p>The two stage median ('median') is the baseline estimate of de Chazal and colleagues (2004): a 200 ms median removes the QRS complexes, a 600 ms median of that removes the P and T waves, and what survives both is the baseline, which is subtracted. A median is used, not a mean, because the median of a window that holds a tall narrow QRS is the surrounding level, so the baseline estimate does not rise under the complex and the ST level is kept. A per-sample sliding median of a 30 minute record measures 55 s on this build, far over the budget, so the window median is laid into overlapping windows as the columns of a matrix, sorted, and taken only on a grid of one point every 80 ms and linearly interpolated between; the baseline it estimates lives well below 1 Hz, so the grid reproduces the per-sample median to within 0.03 mV and runs in 0.6 s. On a wander as fast and as large as 0.5 mV at 0.2 Hz the median's own ST residual is about 0.057 mV, larger than the high pass leaves; on a physiological respiratory-band wander it holds the ST level to 0.03 mV.</p>
+    <p>The spline ('spline') fits a natural cubic spline through the isoelectric level before each QRS and subtracts it. The PQ segment sits on the baseline, so a curve through one level per beat is the baseline. It needs beats, which ecglab.detect finds, reads the level about 40 ms before each QRS onset, and interpolates a cubic spline between the knots. It is the only baseline method that runs a detector first, so it is the slowest: 1.2 s on a 30 minute record, of which the detection is about 0.8 s.</p>
+    <p>The mains notch. With Mains 'auto' the power at 50 and 60 Hz is measured on the baseline-cleaned spectrum and whichever line stands above its nearest neighbouring harmonics by MainsThreshold is removed, else nothing is. A beating heart makes a comb of spectral lines at multiples of its rate, and at 60 bpm a harmonic falls exactly on 50 and on 60 Hz, so the mains line is not compared with the near-zero troughs between the comb lines but with the strongest neighbouring harmonic one to three hertz away: a real hum towers over it, an ECG harmonic does not. The removal is a second-order IIR notch, a biquad designed from the frequency and MainsQ with its zeros exactly on the unit circle and its poles just inside, applied with filtfilt so the phase is not bent. A moving average of one mains period would also null the line, but it nulls the QRS energy that sits at the mains frequency too and so shaves the complex; a narrow notch leaves the broadband QRS almost untouched. With MainsHarmonics true the notch is repeated at every multiple of the mains frequency below the Nyquist, because a non-sinusoidal hum carries harmonics. The notch and its harmonics run in 0.12 s on a 30 minute record, the auto decision and notch together in 0.17 s.</p>
+    <p>Measured on the Noise Stress Test Database, record 118 with electrode-motion noise at 6 dB (118e06): the beats ecglab.detect finds after cleaning agree with the clean-copy annotation exactly as well as before (sensitivity 0.9828, positive predictivity 0.8414 either way), because the detector already band-passes 5 to 15 Hz, which rejects the baseline the high pass removes, and the electrode-motion noise lies inside the QRS band where a baseline high pass and a mains notch do not reach. Cleaning is for reading and measuring the trace, not for a detector that band-passes it anyway; it does not degrade the detection.</p>
+  </description>
+  <used_function />
+  <bibliography>de Chazal, O'Dwyer and Reilly, Automatic classification of heartbeats using ECG morphology and heartbeat interval features, IEEE Transactions on Biomedical Engineering 51(7):1196-1206, 2004; Kligfield et al., Recommendations for the standardization and interpretation of the electrocardiogram, Circulation 115:1306-1324, 2007.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% A contaminated simulated record, cleaned with the defaults.
+recording = ecglab.simulate('Seconds', 30, 'Baseline', 0.5, ...
+  'Mains', 0.1, 'MainsFrequency', 50, 'Seed', 1);
+cleaned = ecglab.clean(recording);
+cleaned.info.cleaning.mains]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% The two stage median baseline on one lead, no mains removed.
+recording = ecglab.simulate('Seconds', 30, 'Baseline', 0.3, 'Seed', 2);
+cleaned = ecglab.clean(recording, 'Baseline', 'median', 'Mains', false);
+cleaned.info.cleaning.baselineRemoved]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.quality">ecglab.quality</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.writewfdb</keyword>
+  <short_description>Ecrit un enregistrement ECG sur disque au format WFDB.</short_description>
+  <syntax>
+    <syntax_item>ecglab.writewfdb(name, recording)</syntax_item>
+    <syntax_item>ecglab.writewfdb(name, recording, 'Format', format)</syntax_item>
+    <syntax_item>ecglab.writewfdb(name, recording, 'Gain', gain, 'Baseline', baseline)</syntax_item>
+    <syntax_item>ecglab.writewfdb(name, recording, 'Annotations', extension)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>name</param_name>
+      <param_description>le nom de l'enregistrement, avec ou sans .hea ; name.hea, name.dat et (s'il y a des annotations) name.atr sont ecrits.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>recording</param_name>
+      <param_description>une structure d'enregistrement telle que ecglab.readwfdb la renvoie.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>format</param_name>
+      <param_description>le format du signal : 16 (par defaut), 212, 24, 32, 80 ou 160.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>gain, baseline</param_name>
+      <param_description>les adu par unite et le zero stocke, un scalaire ou un par derivation ; par defaut ceux de l'enregistrement.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>extension</param_name>
+      <param_description>'auto' ecrit name.atr s'il y a des annotations, une extension ecrit name.extension, false n'ecrit rien.</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output />
+  <description>
+    <p>Un ecrivain n'est digne de confiance que si ce qu'il ecrit se relit, et les bases ouvertes sont conservees au format WFDB, de sorte qu'un enregistrement lu, analyse puis reecrit reste dans le format que le reste du monde lit.</p>
+    <p>Chaque derivation est ecrite entrelacee dans un seul fichier de signal. Un echantillon stocke vaut <b>round(physique * gain + ligne de base)</b>, et l'arrondi est le seul endroit ou le signal perd ce que le format ne peut contenir : un enregistrement ecrit puis relu egale l'original a une demi unite du bit de poids faible en unites physiques, jamais pire. Un format que le lecteur ne sait pas lire n'est jamais ecrit.</p>
+    <p>L'entete porte le nom de l'enregistrement, le nombre de signaux, la frequence et la longueur, l'heure et la date quand l'enregistrement les connaissait, puis une ligne par signal avec le fichier, le format, le gain et la ligne de base et l'unite, la resolution, le zero du convertisseur, la valeur initiale, la somme de controle et la description, et enfin les commentaires en lignes a diese. La somme de controle est celle que WFDB definit, la somme des echantillons bruts modulo 65536 lue comme un entier signe de seize bits, afin qu'un lecteur puisse reperer un fichier de signal tronque sur le disque.</p>
+    <p>Les annotations sont ecrites au format MIT : un mot de saut pour un ecart trop grand pour dix bits, un mot de texte pour un aux non vide, et un mot de num, de sous-type ou de canal seulement quand la valeur change, pour que le fichier soit aussi petit que celui de l'ecrivain de reference. Elles sont ecrites quand l'enregistrement porte des annotations ou quand une extension est nommee.</p>
+  </description>
+  <used_function />
+  <bibliography>Goldberger et al., PhysioBank, PhysioToolkit, and PhysioNet, Circulation 101(23), 2000.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Lire un enregistrement, le reecrire dans l'ancien compactage douze bits, relire.
+recording = ecglab.readwfdb('100');
+ecglab.writewfdb('copy', recording, 'Format', 212);
+again = ecglab.readwfdb('copy');
+disp(max(abs(again.samples(:) - recording.samples(:))))]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readwfdb">ecglab.readwfdb</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

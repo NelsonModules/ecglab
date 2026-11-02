@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.clean</keyword>
+  <short_description>Enlever la derive de ligne de base et le secteur.</short_description>
+  <syntax>
+    <syntax_item>clean = ecglab.clean(X)</syntax_item>
+    <syntax_item>clean = ecglab.clean(X, 'Nom', valeur, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>un ecglab.recording (chaque derivation est nettoyee) ou un simple vecteur signal en millivolts dont la frequence d'echantillonnage est donnee par Rate.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Nom, valeur</param_name>
+      <param_description>options en paires nom et valeur, sans egard a la casse : Baseline (la methode de ligne de base, 'highpass' par defaut, aussi 'median', 'spline' ou 'none'), BaselineCut (la coupure du passe-haut en hertz, par defaut 0.5), Mains ('auto' par defaut, ou 50, 60 ou false), MainsThreshold (de combien la raie du secteur doit depasser les harmoniques voisines pour que 'auto' l'enleve, par defaut 3), MainsQ (le facteur de qualite du notch, par defaut 35), MainsHarmonics (true par defaut, enleve aussi les harmoniques jusqu'a la frequence de Nyquist), Lead (les derivations a nettoyer, noms ou indices de colonne, par defaut toutes ; celles laissees de cote passent inchangees), Rate (la frequence en hertz, requise quand X est un vecteur).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>clean</param_name>
+      <param_description>la meme forme que X : un ecglab.recording avec les memes champs et les echantillons remplaces, ou un vecteur dans l'orientation recue. Un recording porte clean.info.cleaning, une structure avec baseline (la methode et la coupure en hertz, NaN quand la methode n'a pas de coupure), mains (la frequence enlevee ou 0), et baselineRemoved (la valeur efficace en millivolts de ce que l'etape de ligne de base a soustrait, par derivation, 0 pour une derivation laissee de cote).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Deux choses salissent un electrocardiogramme de surface que le coeur n'a pas produites : la derive lente de la ligne de base, due a la respiration et au glissement des electrodes, bien en dessous de la frequence cardiaque, et le ronflement du secteur a 50 ou 60 Hz. Les deux sont enleves sans deplacer le pic du QRS ni incliner le segment ST, car un clinicien lit le niveau ST et un detecteur lit le pic R.</p>
+    <p>Le passe-haut ('highpass') est un passe-haut de Butterworth d'ordre deux a BaselineCut, applique vers l'avant puis vers l'arriere avec filtfilt, donc a PHASE NULLE. Un passe-haut causal a 0.5 Hz retarderait les basses frequences et inclinerait le segment ST, ce qu'un enregistrement diagnostique refuse ; la recommandation de l'AHA autorise un passe-haut a phase lineaire jusqu'a 0.67 Hz, et filtfilt est a phase lineaire, donc le niveau ST est conserve. Mesure : 0.003 mV de decalage ST sur une derive de 0.5 mV a 0.2 Hz, et 0.1 s sur un enregistrement de trente minutes a 360 Hz.</p>
+    <p>La mediane a deux etages ('median') est l'estimation de ligne de base de de Chazal et ses collegues (2004) : une mediane de 200 ms enleve les complexes QRS, une mediane de 600 ms de ce resultat enleve les ondes P et T, et ce qui survit aux deux est la ligne de base, qui est soustraite. On utilise une mediane et non une moyenne, car la mediane d'une fenetre contenant un QRS etroit et haut est le niveau environnant, de sorte que l'estimation ne monte pas sous le complexe et que le niveau ST est garde. Une mediane glissante echantillon par echantillon d'un enregistrement de trente minutes mesure 55 s sur cette version, bien au-dela du budget ; la mediane de fenetre est donc rangee en fenetres chevauchantes comme colonnes d'une matrice, triee, et prise seulement sur une grille d'un point toutes les 80 ms puis interpolee lineairement ; la ligne de base estimee vit bien en dessous de 1 Hz, donc la grille reproduit la mediane echantillon par echantillon a 0.03 mV pres et tourne en 0.6 s. Sur une derive aussi rapide et grande que 0.5 mV a 0.2 Hz le residu ST propre a la mediane est d'environ 0.057 mV, plus grand que ce que laisse le passe-haut ; sur une derive respiratoire physiologique elle garde le niveau ST a 0.03 mV.</p>
+    <p>Le spline ('spline') ajuste une spline cubique naturelle a travers le niveau isoelectrique avant chaque QRS et la soustrait. Le segment PQ est sur la ligne de base, donc une courbe passant par un niveau par battement est la ligne de base. Il faut des battements, que ecglab.detect trouve ; le niveau est lu environ 40 ms avant le debut du QRS, et une spline cubique est interpolee entre les noeuds. C'est la seule methode de ligne de base qui lance d'abord un detecteur, donc la plus lente : 1.2 s sur un enregistrement de trente minutes, dont environ 0.8 s de detection.</p>
+    <p>Le notch du secteur. Avec Mains 'auto', la puissance a 50 et 60 Hz est mesuree sur le spectre deja debarrasse de la ligne de base et la raie qui depasse ses harmoniques voisines de MainsThreshold est enlevee, sinon rien. Un coeur qui bat fait un peigne de raies spectrales aux multiples de sa frequence, et a 60 par minute une harmonique tombe exactement sur 50 et sur 60 Hz, donc la raie du secteur n'est pas comparee aux creux presque nuls entre les dents du peigne mais a la plus forte harmonique voisine a un a trois hertz : un vrai ronflement la domine, une harmonique d'ECG non. L'enlevement est un notch IIR d'ordre deux, un biquad concu a partir de la frequence et de MainsQ avec ses zeros exactement sur le cercle unite et ses poles juste a l'interieur, applique avec filtfilt pour ne pas courber la phase. Une moyenne mobile d'une periode du secteur annulerait aussi la raie, mais elle annule aussi l'energie du QRS a la frequence du secteur et rabote donc le complexe ; un notch etroit laisse le QRS large bande presque intact. Avec MainsHarmonics true le notch est repete a chaque multiple de la frequence du secteur sous le Nyquist, car un ronflement non sinusoidal porte des harmoniques. Le notch et ses harmoniques tournent en 0.12 s sur un enregistrement de trente minutes, la decision auto et le notch ensemble en 0.17 s.</p>
+    <p>Mesure sur la Noise Stress Test Database, l'enregistrement 118 avec un bruit de mouvement d'electrode a 6 dB (118e06) : les battements trouves par ecglab.detect apres nettoyage concordent avec l'annotation de reference exactement aussi bien qu'avant (sensibilite 0.9828, predictivite positive 0.8414 dans les deux cas), car le detecteur filtre deja entre 5 et 15 Hz, ce qui rejette la ligne de base que le passe-haut enleve, et le bruit de mouvement se trouve dans la bande du QRS ou un passe-haut de ligne de base et un notch de secteur n'atteignent pas. Le nettoyage sert a lire et a mesurer la trace, pas pour un detecteur qui la filtre de toute facon ; il ne degrade pas la detection.</p>
+  </description>
+  <used_function />
+  <bibliography>de Chazal, O'Dwyer et Reilly, Automatic classification of heartbeats using ECG morphology and heartbeat interval features, IEEE Transactions on Biomedical Engineering 51(7):1196-1206, 2004; Kligfield et al., Recommendations for the standardization and interpretation of the electrocardiogram, Circulation 115:1306-1324, 2007.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Un enregistrement simule contamine, nettoye avec les valeurs par defaut.
+recording = ecglab.simulate('Seconds', 30, 'Baseline', 0.5, ...
+  'Mains', 0.1, 'MainsFrequency', 50, 'Seed', 1);
+cleaned = ecglab.clean(recording);
+cleaned.info.cleaning.mains]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% La ligne de base par mediane a deux etages sur une derivation, sans secteur.
+recording = ecglab.simulate('Seconds', 30, 'Baseline', 0.3, 'Seed', 2);
+cleaned = ecglab.clean(recording, 'Baseline', 'median', 'Mains', false);
+cleaned.info.cleaning.baselineRemoved]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.quality">ecglab.quality</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

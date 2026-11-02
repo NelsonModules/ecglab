@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.readedf</keyword>
+  <short_description>Lire un enregistrement au format EDF ou EDF+.</short_description>
+  <syntax>
+    <syntax_item>recording = ecglab.readedf(file)</syntax_item>
+    <syntax_item>recording = ecglab.readedf(file, 'Leads', which)</syntax_item>
+    <syntax_item>recording = ecglab.readedf(file, 'Annotations', tf)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>file</param_name>
+      <param_description>le chemin du fichier EDF ou EDF+.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>which</param_name>
+      <param_description>les derivations a rendre, par etiquette (un char ou un cellstr) ou par indice parmi les signaux non annotations ; par defaut tout signal dont l'etiquette nomme une derivation ECG, et tous les signaux quand aucun ne le fait.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>tf</param_name>
+      <param_description>s'il faut lire le signal 'EDF Annotations' dans les annotations de l'enregistrement (vrai par defaut).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>recording</param_name>
+      <param_description>la structure d'enregistrement du module, la meme que rend tout autre lecteur, de sorte que rien en aval ne distingue un fichier EDF d'un enregistrement WFDB.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Le format binaire EDF, EDF+, BDF et BDF+ est lu par la toolbox edf, une dependance de ce module, si bien que l'arithmetique de l'en-tete et les echantillons petit-boutistes (ou 24 bits en BDF) sont traites en un seul endroit ; ce lecteur ne fait que mapper la structure neutre qu'elle renvoie sur l'enregistrement ecglab. Un entier stocke devient une valeur physique par <b>physical = (digital - dmin) * (pmax - pmin) / (dmax - dmin) + pmin</b>, et lire cette arithmetique de travers donne un signal parfaitement vraisemblable et faux.</p>
+    <p>Les signaux peuvent etre echantillonnes a des frequences differentes. Les derivations choisies sont rendues a la frequence la plus elevee d'entre elles, les plus lentes maintenues echantillon par echantillon a l'interieur de chaque enregistrement, et <b>recording.info.rates</b> garde la frequence propre de chacune pour qu'une voie lente ne soit pas prise pour une voie rapide reechantillonnee.</p>
+    <p>Le signal 'EDF Annotations' n'est jamais rendu comme une derivation ; c'est un flux d'octets, pas une voie physiologique. Il porte des listes d'annotations datees (TAL) : un instant avec un signe, une duree facultative apres l'octet 21, un ou plusieurs textes separes par l'octet 20, la liste terminee par un zero. Chaque texte devient une annotation a l'echantillon <b>round(onset * rate) + 1</b> ; un symbole PhysioNet isole devient le symbole, tout autre texte devient le symbole de note avec le texte garde dans aux, et une duree est gardee dans num, en echantillons. La premiere TAL de chaque enregistrement est un horodatage au texte vide et ne porte aucune annotation.</p>
+    <p>Le champ patient <b>X X X X</b> est le patient anonyme du format et devient le sujet <b>anonymous</b>. La date et l'heure de debut vont dans <b>recording.info.startDate</b> (DD/MM/YYYY) et <b>recording.info.startTime</b> (HH.MM.SS) avec startTimeKnown vrai ; l'annee a deux chiffres est etendue par la regle du format, 85 a 99 etant les annees 1900 et 00 a 84 les annees 2000.</p>
+    <p>Un fichier EDF+D (discontinu) est lu comme s'il etait continu, avec <b>recording.info.discontinuous</b> vrai et une note dans les commentaires, parce que le reste du module travaille sur une seule ligne de temps uniforme ; les trous entre enregistrements d'un tel fichier ne sont pas reconstruits.</p>
+  </description>
+  <used_function />
+  <bibliography>Kemp and Olivan, European data format 'plus' (EDF+), Clinical Neurophysiology 114(9), 2003; Kemp et al., A simple format for exchange of digitized polygraphic recordings, Electroencephalography and Clinical Neurophysiology 82(5), 1992.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Lire un fichier EDF et le reecrire en EDF+.
+recording = ecglab.readedf('record.edf');
+ecglab.writeedf('copy.edf', recording);]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.writeedf">ecglab.writeedf</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>version initiale</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

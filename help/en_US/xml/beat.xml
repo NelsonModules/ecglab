@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.beat</keyword>
+  <short_description>Draw one beat with its detector, delineation and class evidence.</short_description>
+  <syntax>
+    <syntax_item>handle = ecglab.beat(X)</syntax_item>
+    <syntax_item>handle = ecglab.beat(X, 'Name', value, ...)</syntax_item>
+    <syntax_item>handle = ecglab.beat(figure, command)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>an ecglab.recording (its beats are detected, delineated and classified unless an analysis is paired through the Analysis option) or an ecglab.analysis from ecglab.analyze (its beats, waves and classes are read, and nothing is recomputed).</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>figure</param_name>
+      <param_description>an open beat view, in the second form: the figure a previous call returned. The command then moves it to another beat.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>command</param_name>
+      <param_description>the move, in the second form: 'next', 'previous', a positive integer (that beat), or {'at', seconds} (the beat nearest that moment, with the window centred on it).</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: Beat (the beat to open on, a 1-based index, 1 by default), At (a moment in seconds to open on instead, the nearest beat; one of Beat or At at a time), Span (the seconds of trace around the beat, 1.2 by default), Detector (the QRS detector when X is a recording and no analysis is paired, 'pantompkins' by default), Analysis (an ecglab.analysis to pair with the recording X so nothing is recomputed; Scoring is an accepted alias), Interactive (true, the default when Visible is 'on', runs the control loop and does not return until the figure is closed; false draws once and returns, which the tests use), Visible ('on' by default or 'off'), OutputImage (a file the current view is saved to, with no control in it), Title (a heading of your own).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>handle</param_name>
+      <param_description>the figure. Its UserData carries everything a redraw needs: the recording, the beats, the waves, the classes, the evidence and the current beat, so the second form finds it all on the figure.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>This is a picture of a signal, NOT a clinical record. ecglab is research and teaching software, not a medical device; a beat view is drawn for research and education and must not be used for diagnosis, monitoring or any medical purpose. A class is a classifier's guess, never a finding.</p>
+    <p>The beat view is the reading microscope of the module: one beat, and WHY the module called it and classed it the way it did. The raw trace is drawn around the chosen beat on the same calibrated paper the strip uses, at 25 mm/s and 10 mm/mV, on a red grid ruled at 1 mm and 5 mm. The delineation is marked on it: a tick at every fiducial of the P, QRS and T waves, a dot at each wave peak, and the three peaks P, R and T named. The onsets and ends are NOT labelled on the trace, because eleven labels would crowd a 30 mm beat; they are read off the interval brackets PR, QRS and QT drawn below the trace, each labelled with the millisecond value the delineation measured.</p>
+    <p>Below the trace is the detector's own evidence for the beat, on the same horizontal window: the series the detector thresholded (the integrated feature of a single-method detector, or the band-passed magnitude of a consensus), the adaptive threshold in force, and the detected beats marked on the feature. This is the WHY of the detection, straight from beats.evidence, which is the reason a detector stores its working and not only its answer.</p>
+    <p>On the right a class card names the AAMI class of the beat as a coloured badge (N normal, S supraventricular ectopic, V ventricular ectopic, F fusion, Q unclassifiable) with its confidence, the confidence being the posterior probability of the winning class from a softmax of the linear discriminant scores. Under it the interpretable features the decision rested on are drawn as bars, each filled by where the beat sits in that feature's range across the record, and the clinical intervals of the beat (PR, QRS, QT, QTc by Bazett and RR) are listed in milliseconds.</p>
+    <p>The second form, ecglab.beat(figure, command), is the only path that changes an open view: it MOVES the objects the figure already holds and creates none, so the object count of a view is the same at every beat, and it is what the buttons, the arrow keys and a console driving the view all call. An interactive view (the default when it is visible) runs a control loop that holds until the figure is closed; a view drawn with 'Interactive', false draws once and returns, and no control is drawn into it, so a saved page is only the axes.</p>
+    <p>The three axes are tagged 'ecglab.beat.trace', 'ecglab.beat.evidence' and 'ecglab.beat.card'. The whole page is a handful of lines and a few small patches, no per-beat fill, so it opens and steps in well under a second.</p>
+  </description>
+  <used_function />
+  <bibliography>Pan and Tompkins, A real-time QRS detection algorithm, IEEE Transactions on Biomedical Engineering 32(3):230-236, 1985; Martinez et al., A wavelet-based ECG delineator: evaluation on standard databases, IEEE Transactions on Biomedical Engineering 51(4):570-581, 2004; de Chazal, O'Dwyer and Reilly, Automatic classification of heartbeats using ECG morphology and heartbeat interval features, IEEE Transactions on Biomedical Engineering 51(7):1196-1206, 2004.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Open the view on the fifth beat of a simulated record and step to the next.
+recording = ecglab.simulate('Seconds', 30, 'Ectopic', 0.1, 'Seed', 1);
+handle = ecglab.beat(recording, 'Beat', 5, 'Interactive', false);
+ecglab.beat(handle, 'next');]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Reuse a whole analysis so the beat is not recomputed, and save the page.
+recording = ecglab.simulate('Seconds', 30, 'Seed', 2);
+analysis = ecglab.analyze(recording);
+ecglab.beat(analysis, 'Beat', 3, 'OutputImage', [tempdir(), '/beat.png']);]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.strip">ecglab.strip</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.chart">ecglab.chart</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.classify">ecglab.classify</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

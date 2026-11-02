@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.readcsv</keyword>
+  <short_description>Lire un enregistrement depuis un fichier texte delimite.</short_description>
+  <syntax>
+    <syntax_item>recording = ecglab.readcsv(file)</syntax_item>
+    <syntax_item>recording = ecglab.readcsv(file, 'Rate', rate)</syntax_item>
+    <syntax_item>recording = ecglab.readcsv(file, name, value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>file</param_name>
+      <param_description>le fichier texte delimite, une colonne par derivation.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>'Rate'</param_name>
+      <param_description>la frequence d'echantillonnage en hertz, requise quand aucune colonne de temps ne la donne.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>'Delimiter'</param_name>
+      <param_description>le separateur de colonnes, quand il ne doit pas etre detecte sur la premiere ligne.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>'Leads'</param_name>
+      <param_description>les noms a donner aux colonnes.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>'Units'</param_name>
+      <param_description>l'unite dans laquelle le fichier est ecrit ; 'uV' divise les valeurs par mille pour que l'enregistrement soit en millivolts.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>'Scale'</param_name>
+      <param_description>un diviseur applique a chaque valeur.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>'TimeColumn'</param_name>
+      <param_description>vrai pour lire la premiere colonne comme un temps meme quand son en-tete ne l'annonce pas.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>'TimeUnit'</param_name>
+      <param_description>'seconds' ou 'milliseconds', quand l'unite de la colonne de temps ne doit pas etre devinee a partir de la taille de son pas.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>'Skip'</param_name>
+      <param_description>un nombre de lignes de tete a ignorer avant l'en-tete.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>'Decimal'</param_name>
+      <param_description>',' pour un export francais, ou le separateur est alors le point-virgule.</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>recording</param_name>
+      <param_description>la meme sorte de structure que rend tout lecteur du module, avec info.format valant 'csv'.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Un export CSV est ce qu'ecrit un tableur ou un banc de recherche quand il n'a pas de format binaire sous la main, donc un lecteur qui le refuse refuse les donnees avec lesquelles arrivent la plupart des utilisateurs.</p>
+    <p>Le separateur est appris sur la premiere ligne : une virgule, un point-virgule, une tabulation, ou des suites d'un ou plusieurs espaces, ce dernier cas etant celui d'un fichier a colonnes alignees qu'un seul espace lirait comme des champs vides entre deux. Un en-tete de noms est pris quand la premiere ligne n'est pas une ligne de nombres, et ses champs deviennent les derivations.</p>
+    <p>Une premiere colonne qui est un temps croissant monotone donne la frequence comme le pas median, robuste a un echantillon perdu la ou une moyenne ne l'est pas, puis est retiree des derivations. Elle est reconnue quand son en-tete dit time, t, seconds ou ms, ou quand l'option TimeColumn est vraie. Le pas est lu en secondes, ou en millisecondes quand son en-tete dit ms, quand TimeUnit le dit, ou quand le pas est plus grand que un, car aucun electrocardiogramme n'est echantillonne a un hertz. Sans colonne de temps l'option Rate est requise, et l'erreur la nomme.</p>
+    <p>Le module parle en millivolts, donc un fichier ecrit en microvolts est divise par mille, et une echelle explicite divise les nombres bruts par ce dans quoi le banc a ecrit ses echantillons.</p>
+    <p>Le fichier est lu entier en un seul fileread, et le corps numerique est analyse par un seul sscanf sur tout le texte plutot que par str2double sur un decoupage : mesure sur un fichier de 650000 par 2 sur cette version, le balayage du texte entier a pris environ 0.9 seconde et le decoupage environ 2.8 secondes, donc le plus rapide est celui qui est garde, et la fonction entiere lit ce fichier en environ 1.1 seconde.</p>
+  </description>
+  <used_function />
+  <bibliography>Shafranovich, Common Format and MIME Type for Comma-Separated Values (CSV) Files, RFC 4180, 2005.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Un export a deux derivations a cinq cents hertz, la frequence donnee car
+% aucune colonne de temps ne la porte.
+recording = ecglab.readcsv('export.csv', 'Rate', 500);
+size(recording.samples)]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Un export francais : la marque decimale est une virgule, donc le
+% separateur est le point-virgule, et la frequence vient d'une colonne de
+% temps en millisecondes.
+recording = ecglab.readcsv('mesure.csv', 'Decimal', ',');
+recording.rate]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readishne">ecglab.readishne</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readwfdb">ecglab.readwfdb</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readedf">ecglab.readedf</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

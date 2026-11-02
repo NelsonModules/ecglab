@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.delineate</keyword>
+  <short_description>Find the P, QRS and T waves and the intervals.</short_description>
+  <syntax>
+    <syntax_item>waves = ecglab.delineate(X)</syntax_item>
+    <syntax_item>waves = ecglab.delineate(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>an ecglab.recording (delineated on the lead named by Lead, or on every lead and fused when Lead is 'all' or several are named) or a plain signal vector in millivolts whose sampling rate is given as Rate.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: Beats (a beats struct from ecglab.detect to hang the delineation on; when absent the beats are detected with the default method), Lead (a name, a column index, several of either, or 'all'; default the first ECG-like lead), Rate (the sampling rate in hertz, required when X is a vector), Clean (true by default: remove the baseline with ecglab.clean before delineating, because the wavelet P and T search is thrown by wander; false delineates the signal as given), Method (the detector used when Beats is absent), Qtc (which corrected QT formulas to compute: 'all' by default, a formula name, or a list of 'bazett', 'fridericia', 'framingham', 'hodges'), BoundaryFraction (the fraction of the QRS boundary slope maximum at which the onset and offset are read, searched outward from the maximum; the default is the clinical value that places the onset and offset at the foot of the complex so a real QRS is clinically sized, and at that clinical default the T offset is likewise read to its foot by the tangent method so the QT interval is not left tens of ms short; a value of 1 puts the QRS boundaries and the T offset on the steepest slope itself, the convention a Gaussian-wave simulator plants its truth at).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>waves</param_name>
+      <param_description>the waves struct of the data model: kind 'ecglab.waves'; columns {'Pon','Ppeak','Poff','QRSon','Q','R','S','QRSoff','J','Ton','Tpeak','Toff'}; sample and time (K x 12, 1-based sample indices and seconds, NaN for an ABSENT wave, which is a valid outcome, not a failure); lead (the lead delineated, or the fused set); intervals (a struct of column vectors pr, qrs, qt in ms and qtc a struct with bazett, fridericia, framingham, hodges in ms); morphology (the T-wave morphology code per beat: 0 normal, 1 inverted, 2 upward monophasic, 3 downward monophasic, 4 biphasic negative-positive, 5 biphasic positive-negative); and settings. When several leads are delineated waves also carries perLead (a struct per lead with its own sample and time), and the returned sample and time are the fused global marks.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>The method is the wavelet modulus maxima of Martinez, Almeida, Olmos, Rocha and Laguna (IEEE Transactions on Biomedical Engineering 51(4):570-581, 2004). The stationary wavelet transform with the quadratic spline is computed on the cleaned lead; its detail at a scale is the derivative of the signal smoothed at that scale, so a wave shows as a pair of opposite-sign modulus maxima straddling a zero crossing that is the wave's peak, and the onset and offset are the outer maxima of the pair.</p>
+    <p>The QRS is anchored on the detected R peak at a fine scale (scale 2^2 at 250 Hz, shifted with the sampling rate so the physical band stays the same): the R peak is the zero crossing between the positive and negative maxima of the R upstroke and downstroke, Q and S are the neighbouring zero crossings, and the onset and offset (the latter is J) are the outermost significant slopes of the complex.</p>
+    <p>The T wave is searched after the QRS offset, out to a point set by the RR interval so a fast rhythm does not run the T into the next P, at a coarse scale where its slow slope pair shows and the QRS tail, still of one sign, forms no competing pair. The P wave is searched back from the QRS onset, its reach set by the RR; at the fine scale the P downslope merges into the rising edge of the QRS, so the onset and peak are read there and the offset one scale coarser, where the QRS edge has moved and the P offset stands as a clean extremum. A wave whose slope pair does not clear the threshold is absent (NaN): a P is genuinely absent in atrial fibrillation and after a ventricular ectopic beat, which is why an absent wave is a valid outcome, not a failure. A P is accepted only when it is a complete deflection that leaves an isoelectric PR segment before the QRS, which is how the rising edge of a wide ventricular complex and the fibrillatory f wave are told from a real P.</p>
+    <p>The intervals are PR (P onset to QRS onset), QRS (onset to offset) and QT (QRS onset to T offset), in milliseconds, one row per beat; a beat missing either boundary has NaN. The corrected QT is computed by four rate formulas with the RR in seconds and the QT in ms: Bazett QT / sqrt(RR), Fridericia QT / RR^(1/3), Framingham QT + 154(1 - RR), Hodges QT + 1.75(HR - 60) with HR = 60 / RR.</p>
+    <p>When several leads are delineated the global marks follow the rule the AHA states for a multilead measurement: a wave begins when it has begun on any lead and ends when it has ended on all, so an onset takes the earliest mark across the leads, an offset the latest, and a peak the median of the leads that saw it. The global QRS and QT are therefore measured on the superimposed leads.</p>
+    <p>Measured against the simulator truth (a 60 s, 500 Hz record at 60 bpm, the boundaries planted at one standard deviation of each wave's Gaussian), the signed error per fiducial has a mean under 7 ms and a standard deviation under 11 ms on every one of the twelve marks, and over 98 percent of beats carry a delineated QRS. Measured on this build, a thirty minute single lead at 500 Hz (900000 samples) is delineated in about 3 s, dominated by the beat detection and the wavelet transform.</p>
+  </description>
+  <used_function />
+  <bibliography>Martinez, Almeida, Olmos, Rocha and Laguna, A wavelet-based ECG delineator: evaluation on standard databases, IEEE Transactions on Biomedical Engineering 51(4):570-581, 2004; Bazett, An analysis of the time-relations of electrocardiograms, Heart 7:353-370, 1920; Fridericia, Die Systolendauer im Elektrokardiogramm bei normalen Menschen und bei Herzkranken, Acta Medica Scandinavica 53:469-486, 1920.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% The waves and the median QT of a simulated record.
+recording = ecglab.simulate('Seconds', 30, 'Rate', 500, 'Seed', 1);
+waves = ecglab.delineate(recording);
+median(waves.intervals.qt, 'omitnan')]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Twelve leads delineated and fused; the global QRS onset is the earliest.
+recording = ecglab.simulate('Seconds', 20, 'Rate', 500, 'Leads', 12, 'Seed', 2);
+waves = ecglab.delineate(recording, 'Lead', 'all');
+numel(waves.perLead)]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.clean">ecglab.clean</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+    <history_item>
+      <history_version>0.1.2</history_version>
+      <history_description>T offset read to the clinical foot by the tangent method</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

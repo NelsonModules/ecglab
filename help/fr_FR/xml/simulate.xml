@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.simulate</keyword>
+  <short_description>Synthetiser un electrocardiogramme dont la verite est connue.</short_description>
+  <syntax>
+    <syntax_item>recording = ecglab.simulate()</syntax_item>
+    <syntax_item>recording = ecglab.simulate('Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options en paires nom et valeur, reconnues sans tenir compte de la casse : Seconds (duree en secondes, defaut 60), Rate (frequence d'echantillonnage en hertz, defaut 360), HeartRate (frequence cardiaque moyenne en bpm, defaut 60), HeartRateStd (dispersion de la frequence cardiaque en bpm, defaut 1), Amplitude (pic R normal en mV sur la derivation II, defaut 1.0), Noise (valeur efficace du bruit blanc en mV, defaut 0), Baseline (amplitude de la derive de ligne de base en mV, defaut 0) a BaselineFrequency (defaut 0.2 Hz), Mains (amplitude du ronflement secteur en mV, defaut 0) a MainsFrequency (defaut 60 Hz), Ectopic (fraction de battements rendus extrasystoles ventriculaires, defaut 0), Fibrillation (true rend tout l'enregistrement en fibrillation auriculaire, defaut false), Leads (un nombre de derivations ou une liste de noms, defaut {'II'}), Seed (graine entiere pour la reproductibilite, defaut aucune).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>recording</param_name>
+      <param_description>un ecglab.recording avec info.format 'simulated', ses annotations remplies depuis la verite, et une structure recording.truth (beats, rr, waves, classes, rhythm, settings).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Un enregistrement simule est le seul dont la reponse est connue avant qu'un detecteur, un delineateur ou un classifieur ne soit lance : c'est donc a lui qu'ils sont confrontes, les battements plantes, les bornes d'ondes plantees et les classes plantees etant la verite sur laquelle un resultat est note.</p>
+    <p>La morphologie est le modele en phase de McSharry, Clifford, Tarassenko et Smith : chaque battement est une somme de cinq gaussiennes de la phase theta, aux angles -pi/3, -pi/12, 0, pi/12, pi/2 pour les ondes P, Q, R, S et T, avec les amplitudes et les largeurs par defaut de l'article. L'article integre une equation differentielle echantillon par echantillon ; ce module ne boucle jamais sur les echantillons, le modele est donc evalue en FORME CLOSE : la phase de chaque echantillon est construite depuis les instants des battements avec cumsum et interp1, la somme des gaussiennes est evaluee sur tout le vecteur d'un coup, et la forme d'onde est mise a l'echelle pour que le pic R normal vaille l'amplitude demandee. La forme close est la meme morphologie que celle vers laquelle converge l'equation differentielle, a une fraction du cout et sans la boucle par echantillon que le module s'interdit.</p>
+    <p>La serie RR est le spectre bimodal de l'article : un pic gaussien de basse frequence a 0.1 Hz et un de haute frequence a 0.25 Hz, chacun de largeur 0.01 Hz, avec un rapport de puissance basse sur haute de 0.5. La serie est realisee par la FFT inverse du spectre avec des phases aleatoires et remise a l'echelle de la frequence cardiaque moyenne et de la dispersion demandees, la dispersion en bpm devenant une dispersion RR en secondes par la methode delta.</p>
+    <p>Les battements ectopiques sont des extrasystoles ventriculaires : avances sur leur propre intervalle precedent, sans onde P, avec un QRS trois fois plus large et une fois et demie plus haut, une onde T inversee, et une pause compensatrice apres eux. La fibrillation rend tout l'enregistrement irregulier et sans P, avec une onde f fine vers 6 Hz a la place de l'onde P. Plusieurs derivations sont le meme battement vu sous plusieurs angles, mises a l'echelle par une table de gains relatifs fixe (I 0.6, II 1.0, III 0.4, aVR -0.8, aVL 0.1, aVF 0.7, V1 -0.5, V2 0.4, V3 0.6, V4 0.8, V5 1.0, V6 1.2), les gains negatifs donnant a aVR et V1 leur aspect inverse et a V1 son onde S positive.</p>
+    <p>Les bornes d'ondes de recording.truth.waves sont les douze colonnes du modele de donnees (Pon Ppeak Poff QRSon Q R S QRSoff J Ton Tpeak Toff), chaque debut et chaque fin pris a une largeur de gaussienne de la morphologie, car un clinicien marque une onde la ou elle quitte la ligne de base et, aux largeurs de l'article, cette borne reproduit les intervalles des manuels (mesures a 60 bpm : PR 147 ms, QRS 117 ms, QT 372 ms) ; une borne prise sur la queue large de la gaussienne surestimerait chaque intervalle (un QRS de 164 ms, un QT de 489 ms). Les colonnes P valent NaN pour un battement ectopique ou fibrillant, ce qui est le "absent" valide du modele de donnees. Les annotations sont remplies depuis la meme verite, une marque de rythme au premier echantillon et une marque de battement par R, pour qu'un enregistrement simule puisse etre ecrit en WFDB ou EDF et valide comme un enregistrement telecharge.</p>
+  </description>
+  <used_function />
+  <bibliography>McSharry, Clifford, Tarassenko and Smith, A dynamical model for generating synthetic electrocardiogram signals, IEEE Transactions on Biomedical Engineering 50(3):289-294, 2003.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Trente secondes a 360 Hz, un battement sur dix une ESV, une graine fixe.
+recording = ecglab.simulate('Seconds', 30, 'Ectopic', 0.1, 'Seed', 1);
+% La verite contre laquelle toute analyse est notee.
+beats = recording.truth.beats;
+classes = recording.truth.classes;]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Douze derivations de fibrillation auriculaire avec un peu de ronflement.
+recording = ecglab.simulate('Leads', 12, 'Fibrillation', true, ...
+  'Mains', 0.05, 'Seed', 2);
+recording.truth.rhythm]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.classify">ecglab.classify</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

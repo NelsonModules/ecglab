@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.writeedf</keyword>
+  <short_description>Write a recording in the EDF+ format.</short_description>
+  <syntax>
+    <syntax_item>ecglab.writeedf(file, recording)</syntax_item>
+    <syntax_item>ecglab.writeedf(file, recording, 'RecordSeconds', s)</syntax_item>
+    <syntax_item>info = ecglab.writeedf(file, recording)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>file</param_name>
+      <param_description>the path of the EDF+ file to write.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>recording</param_name>
+      <param_description>a recording struct, as ecglab.readedf returns.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>s</param_name>
+      <param_description>the length of a data record in seconds (one by default).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>info</param_name>
+      <param_description>what was laid down: the number of records, the samples per record, the physical range used for each lead and the quantisation it implies, and whether the last record was padded.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>EDF is what a recorder and a sleep or Holter laboratory writes, so a recording built or processed in the module is written to EDF+C to be opened by any EDF tool and read back by ecglab.readedf without loss beyond the quantisation.</p>
+    <p>The physical range of each lead is its own minimum and maximum with a small margin, so the extreme values are not pinned to the digital rails, and the digital range is the full signed sixteen bit -32768..32767. The quantisation is therefore <b>(pmax - pmin) / 65535</b>, which info reports per lead, so a caller knows the reconstruction error without re-reading the file.</p>
+    <p>The patient field is <b>recording.info.subject</b>, written <b>X X X X</b> (the format's anonymous patient) when it is empty or anonymous. The start date and time are taken from info.</p>
+    <p>One 'EDF Annotations' signal carries the recording's annotations. Each data record opens with a time-keeping TAL of its own start time, which EDF+ requires, then one TAL per annotation that falls in the record's window: the onset, and the symbol as the text, or the aux text when the symbol is the note symbol.</p>
+    <p>The recording's length need not be a whole number of records; the last partial record is padded with the digital minimum, and <b>info.padded</b> says so, because those padded samples read back as the physical minimum of each lead.</p>
+    <p>The EDF+ file itself is written by the edf toolbox, a dependency of this module, so the header layout and the little-endian samples are produced in one place; this writer only maps the ecglab recording onto the neutral struct it consumes.</p>
+  </description>
+  <used_function />
+  <bibliography>Kemp and Olivan, European data format 'plus' (EDF+), Clinical Neurophysiology 114(9), 2003.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Write a two-lead recording and read it back.
+recording = ecglab.readedf('record.edf');
+info = ecglab.writeedf('copy.edf', recording);
+back = ecglab.readedf('copy.edf');]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readedf">ecglab.readedf</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

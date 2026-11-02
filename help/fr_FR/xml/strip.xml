@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.strip</keyword>
+  <short_description>Tracer l'electrocardiogramme sur papier millimetre calibre.</short_description>
+  <syntax>
+    <syntax_item>handle = ecglab.strip(X)</syntax_item>
+    <syntax_item>handle = ecglab.strip(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>un ecglab.recording, ou un vecteur signal numerique dont la frequence d'echantillonnage est donnee par Rate.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options en paires nom et valeur, comparees sans tenir compte de la casse : Layout ('3x4' par defaut, la page clinique, ou '6x2', '12x1', '1'), Lead (la derivation de la disposition a une derivation, un nom ou un indice de colonne), RhythmLead (la derivation de la bande de rythme du 3x4, 'II' par defaut), Seconds (la fenetre en secondes tracee depuis le debut par les dispositions empilees et a une derivation), PanelSeconds (la fenetre d'un panneau du 3x4, 2.5 par defaut), RhythmSeconds (la longueur de la bande de rythme du 3x4, 10 par defaut), Speed (millimetres par seconde, 25 par defaut), Gain (millimetres par millivolt, 10 par defaut), Style ('paper' par defaut, une grille saumon sur creme ; 'bw', une grille grise ; 'monitor', un ecran sombre au trace clair), Rate (la frequence d'echantillonnage, requise quand X est un vecteur), Visible ('on' par defaut ou 'off'), OutputImage (un fichier ou la page est enregistree), Title (un titre a vous).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>handle</param_name>
+      <param_description>la figure. Son UserData porte le plan : la largeur et la hauteur de la page en millimetres, les panneaux et leurs fenetres, la vitesse et le gain, afin qu'un appelant puisse mesurer la page qu'il a tracee.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Ceci est une image d'un signal, PAS un document clinique. ecglab est un logiciel de recherche et d'enseignement, pas un dispositif medical ; une bande est tracee pour la recherche et l'education et ne doit pas servir au diagnostic, a la surveillance ou a toute fin medicale.</p>
+    <p>La page est tracee comme l'imprime un electrocardiographe clinique : une grille rouge reglee a 1 mm et, toutes les cinq lignes, a 5 mm ; une impulsion d'etalonnage de 1 mV au debut de chaque ligne ; le trace a 25 mm/s et 10 mm/mV, de sorte qu'un petit carreau vaut 0.04 s par 0.1 mV et un grand carreau 0.2 s par 0.5 mV. La vitesse et le gain sont imprimes sur la page.</p>
+    <p>L'etalonnage est reel et il survit au fichier enregistre. Toute la page est disposee en unites de MILLIMETRES : x est le temps fois la vitesse et y est moins la tension fois le gain, donc un panneau qui montre S secondes fait exactement S fois Speed millimetres de large et une deflexion de 1 mV fait exactement Gain millimetres de haut. Sur cette version l'export de figure ignore la taille du papier, aussi un SVG est-il reecrit pour declarer sa taille dans les millimetres de la page ; une regle posee sur la page imprimee ou exportee lit alors 25 mm/s et 10 mm/mV. Un PNG ne porte pas de taille physique qu'un lecteur respecte et est ecrit tel quel.</p>
+    <p>La disposition '3x4' par defaut est la page clinique : douze panneaux en trois lignes et quatre colonnes, les lignes I aVR V1 V4 / II aVL V2 V5 / III aVF V3 V6, chaque panneau une fenetre de 2.5 secondes et les quatre colonnes les quatre tranches consecutives d'une acquisition de dix secondes, avec une bande de rythme de la derivation II sur toute la largeur en dessous. '6x2' place les derivations des membres dans la colonne de gauche et les precordiales a droite ; '12x1' empile les douze derivations, chacune une longue bande ; '1' trace une seule derivation. Une derivation que l'enregistrement ne porte pas est etiquetee et laissee vide plutot que retiree, ainsi la page garde sa forme.</p>
+    <p>Chaque panneau est un axe etiquete 'ecglab.strip.&lt;lead&gt;' (la bande de rythme 'ecglab.strip.rhythm'), au-dessus de la grille de la page, portant le trace de cette derivation ; la page elle-meme est 'ecglab.strip'. Le trace est une ligne rognee a son panneau, de sorte qu'un battement plus haut que la ligne sort du papier comme sur un vrai electrocardiographe plutot que d'empieter sur la ligne du dessus. Aucun controle n'est trace, donc la page imprimee et la page a l'ecran sont la meme page.</p>
+    <p>Mesure sur cette version, une page douze derivations de dix secondes se trace en environ 0.3 s et s'enregistre en SVG ou PNG bien en dessous d'une seconde : la grille est deux lignes brisees et chaque trace une ligne, donc rien sur la page n'est un remplissage cellule par cellule.</p>
+  </description>
+  <used_function />
+  <bibliography>Kligfield et al., Recommendations for the standardization and interpretation of the electrocardiogram, Part I: the electrocardiogram and its technology, Circulation 115:1306-1324, 2007.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% La page clinique douze derivations d'un enregistrement simule, en SVG calibre.
+recording = ecglab.simulate('Seconds', 12, 'Rate', 500, 'Leads', 12, 'Seed', 1);
+handle = ecglab.strip(recording, 'OutputImage', [tempdir(), '/ecg.svg']);]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Une seule derivation empilee sur dix secondes dans le style ecran sombre.
+recording = ecglab.simulate('Seconds', 10, 'Rate', 360, 'Seed', 2);
+ecglab.strip(recording, 'Layout', '1', 'Lead', 'II', 'Style', 'monitor');]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.reference</keyword>
+  <short_description>Fetch a record of an open database and read it.</short_description>
+  <syntax>
+    <syntax_item>recording = ecglab.reference(name)</syntax_item>
+    <syntax_item>recording = ecglab.reference(name, 'Annotations', which)</syntax_item>
+    <syntax_item>recording = ecglab.reference(name, 'Folder', folder, 'Download', tf)</syntax_item>
+    <syntax_item>names = ecglab.reference('list', 'Database', db)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>name</param_name>
+      <param_description>the record, written 'database/record' (such as 'mitdb/100', 'qtdb/sel100', 'ludb/1', 'ptbdb/patient001/s0010_re' or 'ptb-xl/records500/00000/00001_hr'), or 'list' to return the record names of a database.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>which</param_name>
+      <param_description>the annotator loaded into recording.annotations: the database default unless given, and '' for none.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>folder</param_name>
+      <param_description>where the files are kept, one sub-folder per database; the default is [prefdir(), '/ecglab_reference'].</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>tf</param_name>
+      <param_description>'Download' true (the default) fetches what is missing; false uses only what is on disk and errors with what is missing.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>db</param_name>
+      <param_description>the database for 'list': one of mitdb, qtdb, nsrdb, afdb, nstdb, ludb, ptbdb, ptb-xl.</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>recording</param_name>
+      <param_description>the recording ecglab.readwfdb returns, with info.source, info.database, info.record and files (the paths fetched) filled in, and recording.reference for qtdb and ludb.</param_description>
+    </param_output_item>
+    <param_output_item>
+      <param_name>names</param_name>
+      <param_description>the record names of the database, as a column cellstr, so a measurement can loop over all of them.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Every figure of the module is measured on the open databases, and a fetcher that writes a file under the wrong name, keeps a truncated download, or loads the wrong annotator quietly corrupts every one of those figures. This function fetches a record from PhysioNet into a local cache and reads it with <b>ecglab.readwfdb</b>, so the rest of the module cannot tell the result from one read off a file a caller had in hand.</p>
+    <p>Nothing is redistributed. The files are fetched on demand from PhysioNet and cached under the reference folder, which is <b>[prefdir(), '/ecglab_reference']</b> by default, with one sub-folder per database and, for the Lobachevsky database, a data sub-folder that mirrors the server. With 'Download' false nothing reaches the network and only what is already on disk is read.</p>
+    <p>For each record the header is fetched, then every signal file the header names (a record may spread its signals over several files, and several signals may share one, so a file named twice is fetched once), then the annotation files of the database: the reference comparator's .atr for the arrhythmia, normal sinus and atrial fibrillation databases, the several annotators of the QT database (.atr .man .q1c .q2c .pu .pu0 .pu1), the .qrs of the atrial fibrillation database, and one annotator per lead for the Lobachevsky database. A file the server does not have is skipped silently when it is optional (the QT q2c, the atrial fibrillation qrsc) and is an error otherwise. Each download lands beside its name with a .part suffix and is moved onto the name only once whole, so a download that stops half way never leaves a truncated file to be read as a short record for ever.</p>
+    <p>The annotator loaded into <b>recording.annotations</b> is the database default (.atr, or q1c for the QT database, or lead ii for the Lobachevsky database, and none for the PTB databases) unless 'Annotations' names another, and none when it is ''. The QT and the Lobachevsky databases are the ones a delineation is validated against, so every annotator of theirs on disk is also read into <b>recording.reference</b> under its own name, and a validation is free to compare a result against any of them.</p>
+    <p><b>ecglab.reference('list', 'Database', db)</b> returns the record names of a database. The lists of the fixed databases are embedded; those of the PTB databases run to thousands of records and are fetched and cached once. The atrial fibrillation database lists twenty five records, of which two carry annotations and no signals; the twenty three a reader can open are listed.</p>
+  </description>
+  <used_function>ecglab.readwfdb</used_function>
+  <bibliography>Goldberger et al., PhysioBank, PhysioToolkit, and PhysioNet, Circulation 101(23), 2000. Moody and Mark, The impact of the MIT-BIH Arrhythmia Database, IEEE Eng in Med and Biol 20(3), 2001. Laguna, Mark, Goldberger and Moody, A database for evaluation of algorithms for measurement of QT and other waveform intervals in the ECG, Computers in Cardiology 24, 1997. Moody and Mark, A new method for detecting atrial fibrillation using R-R intervals, Computers in Cardiology, 1983. Moody, Muldrow and Mark, A noise stress test for arrhythmia detectors, Computers in Cardiology 11, 1984. Bousseljot, Kreiseler and Schnabel, Nutzung der EKG-Signaldatenbank CARDIODAT der PTB ueber das Internet, 1995. Wagner et al., PTB-XL, a large publicly available electrocardiography dataset, Scientific Data 7, 2020. Kalyakulina et al., LUDB: a new open-access validation tool for electrocardiogram delineation algorithms, IEEE Access 8, 2020.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% The first record of the arrhythmia database, fetched and read.
+recording = ecglab.reference('mitdb/100');
+recording.info.source]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Loop over a whole database from what is already on disk.
+names = ecglab.reference('list', 'Database', 'mitdb');
+for index = 1:numel(names)
+  recording = ecglab.reference(['mitdb/', names{index}], 'Download', false);
+end]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readwfdb">ecglab.readwfdb</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

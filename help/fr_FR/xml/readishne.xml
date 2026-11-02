@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.readishne</keyword>
+  <short_description>Lire un enregistrement au format Holter ISHNE.</short_description>
+  <syntax>
+    <syntax_item>recording = ecglab.readishne(file)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>file</param_name>
+      <param_description>un fichier Holter ISHNE 1.0, de magie ISHNE1.0.</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>recording</param_name>
+      <param_description>la meme sorte de structure que rend tout lecteur du module, avec info.format valant 'ishne'.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>ISHNE est le seul format binaire ouvert sur lequel le monde ambulatoire s'est accorde, donc un lecteur qui ne sait pas l'ouvrir ne sait pas ouvrir la plupart des enregistrements Holter.</p>
+    <p>Le fichier est une magie de huit octets, une somme de controle de deux octets, un en-tete fixe de cinq cent douze octets, un bloc de taille variable de texte libre, puis les echantillons en entiers signes sur seize bits entrelaces par derivation. Le fichier entier est lu en un seul fread et les champs sont decoupes dans les octets, car lire champ par champ serait un appel systeme par nombre.</p>
+    <p>L'en-tete porte, pour chaque derivation, un code qui la nomme (0 inconnue, 1 generique, 2 a 4 X Y Z, 5 a 7 I II III, 8 a 10 aVR aVL aVF, 11 a 16 V1 a V6, 17 a 19 ES AS AI) et une resolution d'amplitude en nanovolts par unite, donc la valeur physique est l'entier brut multiplie par cette resolution et divise par un million, en millivolts. Un lecteur qui prend les echantillons non signes transforme chaque valeur negative en une grande valeur positive, et un lecteur qui compte mal le bloc variable lit le texte du commentaire comme un echantillon, donc le bloc est localise a partir du decalage que donne l'en-tete et non suppose.</p>
+    <p>Le sujet est la jonction des deux champs de nom, l'horloge et la date viennent de l'heure de debut et de la date d'enregistrement, que le standard stocke en heure, minute, seconde et en jour, mois, annee. Le bloc variable est garde dans info.comments plutot que supprime. Quand l'heure de debut est tout a zero, c'est le minuit de remplacement et info.startTimeKnown est faux, pour que rien en aval n'en tire une horloge.</p>
+    <p>La disposition des champs a ete lue et verifiee face a Badilini, The ISHNE Holter Standard Output File Format, Annals of Noninvasive Electrocardiology, 1998. Le fichier d'annotations facultatif (magie ANN suivie de 1.0) n'est pas lu : son en-tete et ses enregistrements de battements ne sont pas decrits assez clairement dans la copie accessible du standard pour les analyser sans deviner, et une annotation devinee est pire qu'aucune, donc il est laisse de cote plutot que lu de travers.</p>
+  </description>
+  <used_function />
+  <bibliography>Badilini, The ISHNE Holter Standard Output File Format, Annals of Noninvasive Electrocardiology, 3(3):263-266, 1998.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Un fichier Holter lu et ses derivations listees.
+recording = ecglab.readishne('holter.ecg');
+recording.leads]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readcsv">ecglab.readcsv</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readwfdb">ecglab.readwfdb</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readedf">ecglab.readedf</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

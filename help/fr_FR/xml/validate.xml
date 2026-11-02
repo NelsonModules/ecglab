@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.validate</keyword>
+  <short_description>Comparer un detecteur a la verite, selon ANSI/AAMI EC57.</short_description>
+  <syntax>
+    <syntax_item>agreement = ecglab.validate(test, reference)</syntax_item>
+    <syntax_item>agreement = ecglab.validate(test, reference, nom, valeur)</syntax_item>
+    <syntax_item>agreement = ecglab.validate(agreements)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>test</param_name>
+      <param_description>ce qu'un detecteur a produit : une structure de battements d'ecglab.detect, une structure d'annotations, ou un vecteur d'indices d'echantillons (base 1) ou, avec 'Unit' 'seconds', d'instants.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>reference</param_name>
+      <param_description>la verite : une structure d'annotations, dont seuls les symboles de battement sont compares, ou un vecteur.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>agreements</param_name>
+      <param_description>un tableau de cellules d'accords d'une meme base, a resumer sur les enregistrements.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>nom, valeur</param_name>
+      <param_description>options : 'Kind' ce qui est compare ('beats'), 'Window' la fenetre d'appariement en secondes (0.15), 'Learning' la periode d'apprentissage en secondes (300), 'Rate' la frequence d'echantillonnage pour un vecteur, 'Unit' 'samples' ou 'seconds', 'Table' la table de classes pour ecgLabAami ('bxb'), 'Record' un nom conserve dans le resultat, 'Paced' si l'enregistrement est ecarte des statistiques de classe, 'Shutdown' si une marque de bruit du test ouvre un arret, 'ExcludePaced' si le resume ecarte les enregistrements stimules des chiffres de classe.</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>agreement</param_name>
+      <param_description>une structure de kind 'ecglab.agreement'. Pour un enregistrement, base 'beats' : tp, fp, fn, se, ppv, les paires appariees, les echantillons manques et en trop, l'erreur de position et l'erreur RMS sur les intervalles RR en ms, les comptes par classe, la matrice de classes avec ses statistiques VEB et SVEB, shutdownMissed, paced et les secondes comparees. Pour un tableau de cellules, base 'summary' : les chiffres bruts, les chiffres moyens, le tableau par enregistrement et son markdown.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Un laboratoire que l'on ne peut mesurer sur les bases ouvertes n'est qu'une opinion. Voici le comparateur que prescrit ANSI/AAMI EC57, applique battement par battement.</p>
+    <p>Chaque cote est reduit a une liste triee d'instants. Les cinq premieres minutes sont la periode d'apprentissage et ne comptent d'aucun cote, car la comparaison de la norme y commence. Les deux listes sont alors parcourues une fois avec deux indices : un battement du test et un battement de la reference dans la fenetre d'appariement de 150 ms sont apparies, et quand deux detections se pressent autour d'une reference la plus proche est retenue. Ce qui reste est un manque du cote reference ou un surplus du cote test. La sensibilite vaut tp / (tp + fn) et la predictivite positive tp / (tp + fp), indefinies plutot que nulles quand leur denominateur est vide.</p>
+    <p>Seuls les symboles de battement de la reference sont compares ; une marque de rythme ou de qualite est ignoree. Quatre enregistrements de la base d'arythmies sont stimules et la norme les ecarte des statistiques de classe, ce que le comparateur lit dans la reference elle-meme. Un detecteur peut declarer un arret sur une portion qu'il refuse d'analyser, et un battement de reference a l'interieur est compte a part plutot qu'en faux negatif.</p>
+    <p>Quand le test porte une classe par battement, la matrice de confusion est construite et avec elle les statistiques de detection ventriculaire (VEB) et supraventriculaire (SVEB), V et S chacun contre le reste, les battements de fusion ecartes des chiffres VEB comme la norme le demande.</p>
+    <p>Un resume sur une base rapporte deux chiffres qui repondent a des questions differentes. Le chiffre brut reunit tous les battements puis prend le taux, si bien qu'un long enregistrement pese davantage ; le chiffre moyen prend le taux de chaque enregistrement puis la moyenne, si bien que chaque enregistrement pese autant. Un detecteur bon en moyenne mais faible en brut est bon sur les enregistrements faciles et perd les difficiles.</p>
+  </description>
+  <used_function />
+  <bibliography>ANSI/AAMI EC57, Testing and reporting performance results of cardiac rhythm and ST segment measurement algorithms.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Un enregistrement synthetique dont chaque battement est connu, et un
+% detecteur fait de cette verite decalee de 20 ms : l'accord est parfait
+% apres la periode d'apprentissage.
+recording = ecglab.simulate('Seconds', 600, 'Seed', 1);
+shift = round(0.02 * recording.rate);
+test = recording.annotations.sample + shift;
+agreement = ecglab.validate(test, recording.annotations, ...
+  'Rate', recording.rate, 'Record', 'synthetic')]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readwfdb">ecglab.readwfdb</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.classify</keyword>
+  <short_description>Nommer chaque battement dans les cinq classes AAMI par une analyse discriminante.</short_description>
+  <syntax>
+    <syntax_item>classes = ecglab.classify(X)</syntax_item>
+    <syntax_item>classes = ecglab.classify(X, 'Nom', valeur, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>un ecglab.recording, dont les battements sont trouves par ecglab.detect sauf si Beats est donne, ou un simple vecteur signal en millivolts dont la frequence d'echantillonnage est donnee par Rate et dont les battements sont donnes par Beats.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Nom, valeur</param_name>
+      <param_description>options en paires nom et valeur, sans distinction de casse : Beats (les battements a classer, une struct ecglab.beats ou un vecteur d'indices d'echantillon a base un ; par defaut ecglab.detect les trouve sur un enregistrement, et pour un simple vecteur ils doivent etre donnes), Lead (la derivation a lire, un nom ou un indice de colonne, par defaut la premiere de MLII, II, I, V5, ou la premiere derivation, celle du detecteur), Rate (la frequence d'echantillonnage en hertz, requise quand X est un vecteur), Model (un chemin vers un modele .mat, par defaut le modele livre sous data/ecglab_classifier.mat), Table (la table de classes, gardee dans le resultat ; le modele est entraine sur 'dechazal' quoi qu'elle dise), Prior (l'a priori de classe utilise par la decision : 'empirical' par defaut, l'a priori des frequences d'entrainement, le meilleur pour l'exactitude globale ; 'uniform', qui egalise l'a priori et fait remonter les classes rares que l'a priori des frequences etouffe).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>classes</param_name>
+      <param_description>une struct ecglab.classes : kind 'ecglab.classes', label (K x 1 caracteres dans N S V F Q), features (K x F), featureNames (1 x F), score (K x 5, le score de l'analyse discriminante par classe dans l'ordre N S V F Q), scoreClasses ('NSVFQ'), method, trainedOn (la provenance du modele et le protocole qui laisse DS2 dehors), table, prior (l'a priori de classe utilise), lead, settings (les fenetres d'extraction) et beats (une struct ecglab.beats avec sample, time, rr et label, pour que le resultat soit un cote test valide pour ecglab.validate).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Chaque battement est reduit a un vecteur de caracteristiques de son rythme RR et de sa forme, et une analyse discriminante lineaire ajustee sur l'ensemble d'entrainement DS1 de la base d'arythmie MIT-BIH lui attribue une des cinq classes ANSI/AAMI par la table de Chazal : N (normal et bloc de branche), S (ectopique supraventriculaire), V (ectopique ventriculaire), F (fusion de normal et ventriculaire) et Q (stimule ou non classable). Les cinq classes sont celles de la litterature de classification, pas celles du comparateur de detection : le modele est entraine et applique sur la table dechazal, et Table est gardee dans le resultat pour memoire et non pour reentrainer.</p>
+    <p>Les caracteristiques n'ont besoin d'aucune delineation d'onde : l'intervalle avant le battement et apres lui, l'intervalle avant divise par l'intervalle moyen local sur une fenetre de battements de chaque cote (ce qui distingue un battement premature d'un battement dans un rythme simplement rapide), l'intervalle apres le battement sur cette moyenne (la pause compensatoire qui suit une extrasystole ventriculaire et pas une supraventriculaire, le discriminant ventriculaire que le ratio avant seul manque), cet intervalle moyen lui-meme, une largeur du QRS (l'ecart quadratique moyen de l'energie de la derivee du battement dans les 120 ms autour du pic R, une duree et non une amplitude, le discriminant ventriculaire qu'une forme a amplitude normalisee ne donne pas a un modele lineaire), et le segment du battement de 0,2 s avant le R a 0,4 s apres, ligne de base retiree, amplitude normalisee et reechantillonne a une longueur fixe, pour qu'un complexe ventriculaire large et un complexe sinusal etroit soient distingues, independamment du gain et de la ligne de base. L'extraction est une seule fonction privee que l'ajustement et la classification appellent, pour que l'entrainement et l'usage ne puissent diverger ; un battement dont la fenetre depasse un bord est complete au bord, pas supprime.</p>
+    <p>L'analyse discriminante est en forme close : une gaussienne par classe partageant une seule covariance mise en commun, avec une petite arete sur sa diagonale pour qu'elle s'inverse et des log a priori tires des frequences des classes. Le score d'une classe est une fonction lineaire des caracteristiques, le battement recoit la classe du plus grand score, et il n'y a pas d'objet a sauvegarder, seulement un petit .mat de nombres (data/ecglab_classifier.mat, la provenance dans data/make_ecglab_classifier.m).</p>
+    <p>L'a priori de classe est un choix au moment de la decision qui ne reajuste pas le modele, il ne fait que reponderer les scores de classe, et l'option Prior l'expose. Le defaut 'empirical' garde l'a priori des frequences d'entrainement, que la base desequilibree fait fortement pencher vers la classe normale : le meilleur pour l'exactitude globale, mais il etouffe les classes rares. 'uniform' egalise l'a priori, de sorte que la decision devient la moyenne de classe la plus proche et que les classes rares sont atteintes. Mesure sur DS2, uniform fait monter la sensibilite supraventriculaire a 59,1 pour cent et la ventriculaire a 66,2 pour cent au prix de l'exactitude globale, de 88,8 a 78,4 pour cent ; les deux sont les extremites d'un compromis et le choix appartient a l'appelant et a son but. Les deux sont dans data/ecglab_classification_mitdb.md.</p>
+    <p>Le modele est mesure sur l'ensemble de test DS2 mis de cote, l'autre moitie de la division inter-patient de Chazal 2004, par data/make_ecglab_classification.m ; aucun battement d'un patient de DS2 n'est jamais dans l'entrainement. Ces chiffres inter-patient sont bien en dessous des chiffres intra-patient qu'une division negligente rapporte : la predictivite positive supraventriculaire honnete est basse, comme celle de la litterature. Logiciel de recherche, pas un dispositif medical. ecglab est pour la recherche et l'education. Ce n'est pas un dispositif medical et ne doit pas etre utilise pour un diagnostic clinique, une surveillance de patient, une decision de traitement, ou tout but medical.</p>
+  </description>
+  <used_function />
+  <bibliography>de Chazal, O'Dwyer and Reilly, Automatic classification of heartbeats using ECG morphology and heartbeat interval features, IEEE Transactions on Biomedical Engineering 51(7):1196-1206, 2004.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Classer les battements d'un enregistrement simule et compter les ventriculaires.
+recording = ecglab.simulate('Seconds', 60, 'Ectopic', 0.1, 'Seed', 1);
+classes = ecglab.classify(recording);
+sum(classes.label == 'V')]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Le resultat va directement a ecglab.validate pour la matrice de confusion.
+recording = ecglab.simulate('Seconds', 60, 'Ectopic', 0.1, 'Seed', 1);
+classes = ecglab.classify(recording);
+agreement = ecglab.validate(classes.beats, recording.annotations, ...
+  'Kind', 'beats', 'Table', 'dechazal');
+agreement.matrix]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.validate">ecglab.validate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+    <history_item>
+      <history_version>0.1.1</history_version>
+      <history_description>caracteristique de largeur QRS et option Prior</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

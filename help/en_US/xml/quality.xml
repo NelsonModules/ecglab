@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.quality</keyword>
+  <short_description>Judge the signal quality per window, with indices and a verdict.</short_description>
+  <syntax>
+    <syntax_item>quality = ecglab.quality(X)</syntax_item>
+    <syntax_item>quality = ecglab.quality(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>an ecglab.recording (the lead named by Lead is judged, the first ECG-like lead by default) or a plain signal vector in millivolts whose sampling rate is given as Rate.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: Lead (the lead to judge, a name or a column index, default the first of MLII, II, I, V5, or the first lead), Rate (sampling rate in hertz, required when X is a vector), Window (window length in seconds, default 10), Step (step between windows in seconds, default the window so the windows do not overlap; a smaller step overlaps them), MatchWindow (the bSQI match tolerance in seconds, default 0.15), Detectors (the two detectors of different families that bSQI compares, default {'pantompkins', 'wqrs'}; the first is also the one the Orphanidou rules read), BsqiThreshold (the least bSQI an acceptable window must reach on the bSQI rule, default 0.9), Rule (what acceptable means: 'bsqi', 'orphanidou', 'both' by default, or 'zhao').</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>quality</param_name>
+      <param_description>a struct: kind 'ecglab.quality', window, step, time (the centre of each window in seconds), bsqi, ksqi, psqi, bassqi (a value per window), orphanidou (a logical per window), zhao (a label per window), acceptable (a logical per window), usableFraction (the share of acceptable windows), good (the longest acceptable stretch in seconds), and settings (every parameter used).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>A recording is judged window by window, so a reader or a later analysis can keep the stretches worth trusting and set the rest aside. The signal is cut into windows of Window seconds stepped by Step seconds (the default step equals the window, so the windows tile without overlap; a smaller step overlaps them). Each window is given a set of signal quality indices and a verdict. The two detectors bSQI needs are run ONCE over the whole signal and their beats are split into windows, so the detection cost is paid once however many windows there are, not once per window.</p>
+    <p>bSQI (Li, Mark and Clifford 2008) is the agreement of two QRS detectors of different design, as the F1 of their matched beats: with n1 and n2 the beats the two detectors placed in the window and M the pairs that match within MatchWindow, it is 2 M / (n1 + n2). Two detectors fail in different ways, so where they agree there is a beat and where they disagree the trace is doubtful; a window with no beats from either scores zero. The default pair, Pan-Tompkins and the curve length transform, are of different families on purpose.</p>
+    <p>kSQI is the kurtosis of the window: a clean ECG is dominated by the brief, sharp QRS and is strongly peaked, well above the Gaussian value of three (about 23 on the simulator), while white noise is Gaussian and near three. pSQI is the share of spectral power in the QRS band 5 to 15 Hz against the wider 5 to 40 Hz band, high for a clean complex and low for broadband noise. basSQI is the share of power above 1 Hz over the whole: baseline wander sits below 1 Hz, so a trace free of wander keeps almost all its power above it.</p>
+    <p>The Orphanidou et al. (2015) rules make one logical per window: the heart rate between 40 and 180, no RR interval over three seconds, the longest RR over the shortest under 2.2, and the mean correlation of the beats to their average template over 0.66. The first three catch an impossible rhythm, the last a window whose beats do not look alike, which is what noise or a loose lead produces. The rhythm and the templates are read from the first detector.</p>
+    <p>The Zhao and Zhang (2018) fusion reads kSQI, pSQI and basSQI against the paper's thresholds (kurtosis above 5, QRS band share between 0.5 and 0.8, above-baseline share above 0.95) and returns Excellent when all three are good, Unacceptable when all three are bad, and Barely acceptable in between.</p>
+    <p>The verdict, acceptable, is chosen by Rule: 'bsqi' asks bsqi to reach BsqiThreshold, 'orphanidou' asks the physiological rules, 'both' (the default) asks for both, and 'zhao' keeps a window the fusion does not call Unacceptable. usableFraction is the share of acceptable windows; good is the longest run of consecutive acceptable windows as a time. Measured on a thirty minute simulated record at 360 Hz: quality costs 2.35 s against 2.37 s for its two detections alone, the windowing, spectra and templates adding no measurable time (the detectors are run once). On the Noise Stress Test record 118e00, whose noise is added in known two minute segments after the first five minutes, the default rule calls every noisy-segment window unacceptable and only 3 percent of the clean-segment windows.</p>
+  </description>
+  <used_function />
+  <bibliography>Li, Mark and Clifford, Robust heart rate estimation from multiple asynchronous noisy sources using signal quality indices and a Kalman filter, Physiological Measurement 29:15-32, 2008; Orphanidou, Bonnici, Charlton, Clifton, Vallance and Tarassenko, Signal-quality indices for the electrocardiogram and photoplethysmogram, IEEE Journal of Biomedical and Health Informatics 19:832-838, 2015; Zhao and Zhang, SQI quality evaluation mechanism of single-lead ECG signal based on simple heuristic fusion and fuzzy comprehensive evaluation, Frontiers in Physiology 9:727, 2018.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Two minutes of clean simulated signal: nearly every window is usable.
+recording = ecglab.simulate('Seconds', 120, 'Seed', 1);
+q = ecglab.quality(recording);
+fprintf('%.0f%% usable\n', 100 * q.usableFraction)]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% A clean start and a noisy end: the longest good stretch is the clean part.
+recording = ecglab.simulate('Seconds', 180, 'Seed', 2);
+N = size(recording.samples, 1);
+third = round(2 * N / 3);
+recording.samples(third + 1:end, 1) = recording.samples(third + 1:end, 1) ...
+  + 0.5 * randn(N - third, 1);
+q = ecglab.quality(recording);
+good = q.good]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.validate">ecglab.validate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

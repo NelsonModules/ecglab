@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <module_name>ecglab</module_name>
+  <chapter>ecglab</chapter>
+  <chapter_description>
+    <p>An electrocardiography laboratory for Nelson: read an electrocardiogram from the open formats (WFDB, EDF+, CSV, ISHNE), clean it and grade its quality, find its beats with seven detectors measured against each other, delineate its P, QRS and T waves and read the intervals, name each beat in the five AAMI classes, find the atrial fibrillation, measure the heart rate variability by the Task Force definitions and the twelve leads, draw it on calibrated paper, on a summary page and one beat at a time, and print a report; and say on which record and with which figure every claim was checked.</p>
+    <p>Every claim is measured on an open database, with the script in the module's data directory that reproduces it. Beat detection is measured on the MIT-BIH Arrhythmia Database (the best detector, elgendi, at 99.8 percent sensitivity and 99.8 percent positive predictivity over the 48 records under ANSI/AAMI EC57); wave delineation on the QT Database against the cardiologists' marks; beat classification between patients on the de Chazal split (86.3 percent overall accuracy, the honest minority-class figures stated); and atrial fibrillation on the AF Database (episode sensitivity 75.6 percent, per-second Cohen's kappa 0.935). The numbers, their databases and their scripts are in the README and the data directory. These are measurements, never clinical findings.</p>
+    <p><b>Research software, not a medical device.</b> ecglab is for research and education. It is not a medical device and must not be used for clinical diagnosis, patient monitoring, treatment decisions, or any medical purpose.</p>
+  </chapter_description>
+</xmldoc>

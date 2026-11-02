@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.writewfdb</keyword>
+  <short_description>Write an ECG recording to disk in the WFDB format.</short_description>
+  <syntax>
+    <syntax_item>ecglab.writewfdb(name, recording)</syntax_item>
+    <syntax_item>ecglab.writewfdb(name, recording, 'Format', format)</syntax_item>
+    <syntax_item>ecglab.writewfdb(name, recording, 'Gain', gain, 'Baseline', baseline)</syntax_item>
+    <syntax_item>ecglab.writewfdb(name, recording, 'Annotations', extension)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>name</param_name>
+      <param_description>the record name, with or without its .hea extension; name.hea, name.dat and (when there are annotations) name.atr are written.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>recording</param_name>
+      <param_description>a recording struct as ecglab.readwfdb returns.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>format</param_name>
+      <param_description>the signal format: 16 (the default), 212, 24, 32, 80 or 160.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>gain, baseline</param_name>
+      <param_description>the adu per unit and the stored zero, a scalar or one per lead; the default is the recording's own.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>extension</param_name>
+      <param_description>'auto' writes name.atr when there are annotations, an extension writes name.extension, false writes none.</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output />
+  <description>
+    <p>A writer is only trustworthy if what it writes reads back, and the open databases are kept in WFDB, so a recording read, analysed and written again stays in the format the rest of the world reads.</p>
+    <p>Every lead is written interleaved in one signal file. A stored sample is <b>round(physical * gain + baseline)</b>, and the round is where the signal loses what the format cannot hold: a recording written and read back equals the original to one half of a least significant bit in physical units, never worse. A format the reader cannot read is never written.</p>
+    <p>The header carries the record name, the signal count, the rate and the length, the clock and date when the recording knew them, then one line per signal with the file, the format, the gain and baseline and unit, the resolution, the ADC zero, the initial value, the checksum and the description, and finally the comments as hash lines. The checksum is the one WFDB defines, the sum of the raw samples modulo 65536 read as a signed sixteen bit value, so a reader can catch a signal file that was truncated on disk.</p>
+    <p>Annotations are written in the MIT format: a skip word for a gap too large for ten bits, a text word for a non-empty aux, and a num, subtype or channel word only when the value changes, so the file is as small as the reference writer's. They are written when the recording carries annotations or when an extension is named.</p>
+  </description>
+  <used_function />
+  <bibliography>Goldberger et al., PhysioBank, PhysioToolkit, and PhysioNet, Circulation 101(23), 2000.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Read a record, write it back in the older twelve bit packing, read it again.
+recording = ecglab.readwfdb('100');
+ecglab.writewfdb('copy', recording, 'Format', 212);
+again = ecglab.readwfdb('copy');
+disp(max(abs(again.samples(:) - recording.samples(:))))]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readwfdb">ecglab.readwfdb</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.readishne</keyword>
+  <short_description>Read a recording in the ISHNE Holter format.</short_description>
+  <syntax>
+    <syntax_item>recording = ecglab.readishne(file)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>file</param_name>
+      <param_description>an ISHNE 1.0 Holter file, magic ISHNE1.0.</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>recording</param_name>
+      <param_description>the same kind of struct every reader of the module returns, with info.format set to 'ishne'.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>ISHNE is the one open binary format the ambulatory world agreed on, so a reader that cannot open it cannot open most Holter recordings.</p>
+    <p>The file is a magic of eight bytes, a two byte checksum, a fixed header of five hundred and twelve bytes, a variable-length block of free text, and then the samples as signed sixteen bit integers interleaved by lead. The whole file is read in one fread and the fields are cut from the bytes, because reading field by field would be a system call per number.</p>
+    <p>The header carries, for each lead, a code that names it (0 unknown, 1 generic, 2 to 4 X Y Z, 5 to 7 I II III, 8 to 10 aVR aVL aVF, 11 to 16 V1 to V6, 17 to 19 ES AS AI) and an amplitude resolution in nanovolts per unit, so the physical value is the raw integer times that resolution divided by a million, in millivolts. A reader that takes the samples unsigned turns every negative value into a large positive one, and one that miscounts the variable block reads the comment text as a sample, so the block is located from the offset the header gives and not assumed.</p>
+    <p>The subject is the two name fields joined, the clock and the date come from the start time and the record date, which the standard stores as hour, minute, second and as day, month, year. The variable block is kept in info.comments rather than dropped. When the start time is all zeros it is the placeholder midnight and info.startTimeKnown is false, so nothing downstream prints a clock off it.</p>
+    <p>The field layout was read from and verified against Badilini, The ISHNE Holter Standard Output File Format, Annals of Noninvasive Electrocardiology, 1998. The optional annotation file (magic ANN followed by 1.0) is not read: its header and its beat records are not described clearly enough in the reachable copy of the standard to parse them without guessing, and a guessed annotation is worse than none, so it is left out rather than read wrongly.</p>
+  </description>
+  <used_function />
+  <bibliography>Badilini, The ISHNE Holter Standard Output File Format, Annals of Noninvasive Electrocardiology, 3(3):263-266, 1998.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% A Holter file read and its leads listed.
+recording = ecglab.readishne('holter.ecg');
+recording.leads]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readcsv">ecglab.readcsv</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readwfdb">ecglab.readwfdb</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readedf">ecglab.readedf</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

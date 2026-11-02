@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.detect</keyword>
+  <short_description>Detecter les battements, par une methode ou un consensus.</short_description>
+  <syntax>
+    <syntax_item>beats = ecglab.detect(X)</syntax_item>
+    <syntax_item>beats = ecglab.detect(X, 'Nom', valeur, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>un ecglab.recording (une de ses derivations est choisie) ou un simple vecteur signal en millivolts dont la frequence d'echantillonnage est donnee par Rate.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Nom, valeur</param_name>
+      <param_description>options en paires nom et valeur, sans egard a la casse : Method (nom du detecteur, par defaut 'pantompkins', aussi 'hamilton', 'consensus', ou tout autre detecteur prive existant), Lead (la derivation a lire, un nom ou un indice de colonne, par defaut la premiere de MLII, II, I, V5, ou la premiere derivation), Rate (frequence en hertz, requise quand X est un vecteur), Refractory (intervalle le plus court entre deux battements en secondes, par defaut 0.2), Polarity ('auto' par defaut, le signe de l'asymetrie du signal filtre, qui lit le penchant droit ou inverse que le QRS imprime a la trace, ou 'positive' ou 'negative'), Snap (true par defaut, cale chaque battement sur le pic R a moins de 60 ms), Methods (pour le consensus, la liste des methodes, par defaut toutes celles disponibles), Votes (pour le consensus, le nombre minimal de methodes qui doivent s'accorder, par defaut la majorite), Window (pour le consensus, l'ecart de regroupement en secondes, par defaut 0.06).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>beats</param_name>
+      <param_description>une structure ecglab.beats : kind 'ecglab.beats', sample (K x 1, base 1), time (secondes), rr (K x 1 secondes, NaN sur le premier), method, lead, settings (tous les parametres utilises) et evidence (la serie que la methode a seuillee, nommee feature, son seuil et le signal filtre filtered, chacune N x 1 ; pour un consensus, les votes par battement et les battements fournis par chaque methode).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Un seul repartiteur, une seule interface, plusieurs detecteurs. Une methode est une fonction privee qui renvoie les echantillons reperes et les preuves a partir d'un signal et d'une frequence ; ajouter un tel fichier dans le dossier prive ajoute une methode sans rien changer d'autre, et les methodes existantes sont decouvertes au moment de l'appel. Les battements de chaque methode sont ensuite places de la meme facon : cales sur l'extremum du signal filtre entre 5 et 15 Hz a moins de 60 ms du repere du detecteur, dans la polarite choisie, afin que la serie RR soit comparable entre methodes et avec une base dont les marques sont sur le pic du QRS.</p>
+    <p>Pan et Tompkins (1985) filtrent le signal entre 5 et 15 Hz, prennent la pente, l'elevent au carre et l'integrent sur les 150 ms d'un complexe large, puis gardent les collines qui depassent un seuil adaptatif place au quart du chemin entre un niveau de bruit et un niveau de signal courants. Une periode refractaire, un test de pente pour l'onde T et une recherche en arriere des battements manques lors d'une longue pause completent la decision. Mesure sur les trente minutes de l'enregistrement 100 de la base d'arythmies : sensibilite 1.0000, predictivite positive 1.0000, en 0.8 s.</p>
+    <p>Hamilton (2002) partage cette forme avec une bande plus haute (8 a 16 Hz), une simple derivee redressee plutot qu'elevee au carre, une moyenne de 80 ms, et des niveaux pris comme la mediane des huit derniers pics de chaque sorte, qu'un mauvais pic ne peut entrainer. Mesure sur le meme enregistrement : sensibilite 1.0000, predictivite positive 1.0000, en 0.8 s.</p>
+    <p>Christov (2004) construit un seul seuil a partir de trois termes additionnes. Deux courtes moyennes glissantes, de 20 ms (une periode du secteur) et 28 ms, nettoient l'interference du secteur et le bruit musculaire ; la valeur absolue de la derivee forme ensuite une derivation complexe ou chaque battement est une colline positive. Le seuil qu'une colline doit depasser est la somme de M, un niveau de pente raide tenu haut pendant 200 ms apres un battement puis decroissant sur la seconde suivante ; F, un niveau integrateur qui suit la derive lente du signal ; et R, un niveau d'attente du battement qui devient negatif pour abaisser le seuil une fois passes les deux tiers de l'intervalle attendu. Une colline peu apres un battement dont la pente est inferieure a la moitie de celle du dernier battement est rejetee comme son onde T. Mesure sur les trente minutes de l'enregistrement 100 de la base d'arythmies : sensibilite 1.0000, predictivite positive 1.0000, en 0.8 s. Sur les 48 enregistrements sa sensibilite globale est 0.9954 ; ses fausses detections se concentrent sur le flutter ventriculaire de l'enregistrement 207 et les enregistrements stimules, des episodes que la norme de reference met a part.</p>
+    <p>Engelse et Zeelenberg (1979), dans la forme a balayage unique modifiee par Lourenco et ses collegues (2012), trouvent un complexe par sa FORME et non par la taille d'une colline. Un derivateur et un passe-bas binomial produisent un signal qui oscille vers le haut puis vers le bas a un QRS ; une oscillation vers le haut au-dela d'un niveau adaptatif M est une candidate, confirmee quand elle recoit en reponse, dans les 160 ms, une oscillation en sens inverse au-dela d'un niveau negatif distinct qui suit les oscillations descendantes recentes. Le test biphasique, qu'une onde P ou T ne peut passer, permet a M de rester assez bas pour attraper un complexe faible ou ectopique. Mesure sur le meme enregistrement : sensibilite 0.9996, predictivite positive 1.0000, en 0.6 s.</p>
+    <p>Kalidas et Tamil (2017) isolent la bande du QRS par la transformee en ondelettes stationnaire (db3) plutot que par un filtre passe-bande, calculee par l'algorithme a trous car la transformee n'est pas dans le coeur. Le detail du niveau choisi selon la frequence pour que sa bande se place sur le QRS (niveau 4 a 360 Hz, la bande 11 a 22 Hz) est additionne a une fraction mesuree du detail inferieur suivant, afin de ne pas manquer un complexe ventriculaire large dont l'energie se trouve une octave plus bas ; la somme est elevee au carre en energie, integree sur 150 ms, puis seuillee par la logique adaptative de Pan et Tompkins sans son test de l'onde T, que la bande d'ondelette a deja rendu inutile. Mesure sur les 48 enregistrements de la base d'arythmies : sensibilite brute 0.9955, predictivite positive 0.9936, environ 0.9 s sur les trente minutes.</p>
+    <p>Elgendi (2013) detecte avec deux moyennes mobiles et aucun seuil courant, ce qui le rend rapide. Le signal est filtre entre 8 et 20 Hz, sa partie negative ramenee a zero puis elevee au carre, ensuite lisse par une moyenne courte de la largeur d'un QRS (97 ms) et une longue de la largeur d'un battement (611 ms). Un bloc d'interet s'ouvre la ou la moyenne courte depasse la longue augmentee d'une petite fraction de l'energie moyenne ; un bloc au moins aussi large qu'un QRS porte un battement, place a son plus grand echantillon filtre, et les blocs distants de moins de 0.3 s sont fusionnes dans le plus grand. Mesure sur les memes 48 enregistrements : sensibilite brute 0.9980, predictivite positive 0.9976, environ 0.4 s sur les trente minutes.</p>
+    <p>Zong, Moody et Jiang (2003) transforment le signal par une autre voie : un filtre passe-bas qui encoche le secteur et garde un caractere a 16 Hz, puis une transformee de longueur de courbe qui somme, sur les 130 ms d'un complexe, la longueur sqrt(dt^2 + dy^2) de la trace filtree, qu'un QRS raide allonge bien plus qu'une onde douce. Un QRS est marque la ou cette longueur franchit un seuil adaptatif tenu au tiers d'une estimation de pic courante ; ce detecteur marque le DEBUT du QRS, pas le pic, en remontant jusqu'au pied de la montee de longueur, et garde le debut et le point J dans les preuves pour le delineateur, le repere renvoye pour le calage etant la plus grande deflexion juste apres le debut. Mesure sur les trente minutes de l'enregistrement 100 de la base d'arythmies : sensibilite 0.9995, predictivite positive 1.0000, en 0.8 s.</p>
+    <p>Le consensus execute plusieurs methodes, met en commun leurs reperes cales, regroupe les echantillons par un ecart de Window secondes, et ne garde un groupe que la ou au moins Votes methodes distinctes s'accordent, placant le battement a l'echantillon median. Il retire la fausse detection que chaque methode fait seule tout en gardant les battements qu'elles trouvent toutes.</p>
+  </description>
+  <used_function />
+  <bibliography>Pan and Tompkins, A real-time QRS detection algorithm, IEEE Transactions on Biomedical Engineering 32(3):230-236, 1985; Hamilton, Open source ECG analysis, Computers in Cardiology 29:101-104, 2002; Christov, Real time electrocardiogram QRS detection using combined adaptive threshold, BioMedical Engineering OnLine 3:28, 2004; Engelse and Zeelenberg, A single scan algorithm for QRS-detection and feature extraction, Computers in Cardiology 6:37-42, 1979, as modified by Lourenco, Silva, Leite, Lourenco and Fred, Real time electrocardiogram segmentation for finger based ECG biometrics, BIOSIGNALS 2012; Kalidas and Tamil, Real-time QRS detector using stationary wavelet transform for variable low-cost ECG monitoring, IEEE BIBE 2017; Elgendi, Jonkman and De Boer, Frequency bands effects on QRS detection, BIOSIGNALS 2010; Elgendi, Fast QRS detection with an optimized knowledge-based method: evaluation on 11 standard ECG databases, PLOS ONE 8(9):e73557, 2013; Zong, Moody and Jiang, A robust open-source algorithm to detect onset and duration of QRS complexes, Computers in Cardiology 30:737-740, 2003.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Trente secondes de signal simule, detectees avec Pan et Tompkins.
+recording = ecglab.simulate('Seconds', 30, 'Seed', 1);
+beats = ecglab.detect(recording, 'Method', 'pantompkins');
+bpm = 60 / median(beats.rr, 'omitnan')]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Un consensus de deux methodes, ne gardant que les battements communs.
+recording = ecglab.simulate('Seconds', 60, 'Noise', 0.1, 'Seed', 2);
+beats = ecglab.detect(recording, 'Method', 'consensus', ...
+  'Methods', {'pantompkins', 'hamilton'}, 'Votes', 2);
+beats.evidence.votes]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.validate">ecglab.validate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

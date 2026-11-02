@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.readwfdb</keyword>
+  <short_description>Lit un enregistrement ECG au format WFDB.</short_description>
+  <syntax>
+    <syntax_item>recording = ecglab.readwfdb(name)</syntax_item>
+    <syntax_item>recording = ecglab.readwfdb(name, 'Annotations', which)</syntax_item>
+    <syntax_item>recording = ecglab.readwfdb(name, 'Leads', leads)</syntax_item>
+    <syntax_item>recording = ecglab.readwfdb(name, 'Physical', false)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>name</param_name>
+      <param_description>l'enregistrement, avec ou sans son extension .hea.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>which</param_name>
+      <param_description>'auto' lit name.atr quand il existe ; une extension lit name.extension ; un chemin lit ce fichier ; false n'en lit aucun.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>leads</param_name>
+      <param_description>noms ou indices des derivations a garder, dans l'ordre demande.</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>recording</param_name>
+      <param_description>la structure d'enregistrement que tout lecteur du module renvoie, avec les echantillons en unites physiques, les derivations, les annotations, et le gain et la ligne de base par derivation pour un aller-retour.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Les bases de donnees ouvertes d'electrocardiogrammes annotes sont conservees au format WFDB, et un laboratoire qui ne sait pas les lire ne peut pas etre mesure contre elles.</p>
+    <p>L'entete est du texte : une ligne pour l'enregistrement, puis une ligne par signal, indiquant le fichier ou il se trouve, comment il est compacte, et le gain et la ligne de base qui ramenent un entier stocke vers une valeur physique. Mal lire ce champ donne un signal qui semble plausible et qui est faux, d'ou l'interet de dire ce qu'il contient : un gain, une ligne de base optionnelle entre parentheses, et une unite optionnelle apres une barre oblique. La valeur physique est <b>(stocke - ligne de base) / gain</b>, la ligne de base valant par defaut le zero du convertisseur.</p>
+    <p>Tous les formats de signal que les bases emploient sont lus : 8 (premieres differences), 16 et 61 (seize bits, octet de poids faible puis fort), 24 et 32 (signes, octet de poids faible d'abord), 80 et 160 (binaire decale, huit et seize bits), 212 (deux echantillons de douze bits dans trois octets), et 310 et 311 (trois echantillons de dix bits dans quatre octets, les deux compactages). Un plus apres le format porte un decalage en octets, un x porte le nombre d'echantillons par trame d'un signal multi-frequence, les signaux peuvent s'etaler sur plusieurs fichiers, et un enregistrement peut etre coupe en segments. Un format compresse (FLAC) est refuse par son nom plutot que mal lu.</p>
+    <p>Un enregistrement multi-frequence est renvoye avec chaque derivation a la frequence la plus haute, chaque derivation plus lente maintenue sur la trame, avec <b>info.multiFrequency</b> vrai et <b>info.frameRate</b> conserve. Un enregistrement multi-segment est recousu en une seule matrice, un segment nul devenant NaN de sa longueur afin que la chronologie ne soit pas raccourcie.</p>
+    <p>Les annotations sont des mots de seize bits : les six bits de poids fort disent ce qu'est la marque et les dix de poids faible la distance depuis la precedente. Un ecart trop grand pour dix bits est porte par les deux mots qui suivent un code de saut, la moitie haute d'abord et signee, de sorte qu'un lecteur qui le saute decale toutes les marques suivantes. Les marques reviennent dans <b>recording.annotations</b> avec le mnemonique PhysioNet comme symbole et l'echantillon en base un, une marque au temps fichier t tombant a l'echantillon t + 1.</p>
+  </description>
+  <used_function />
+  <bibliography>Goldberger et al., PhysioBank, PhysioToolkit, and PhysioNet, Circulation 101(23), 2000. Moody and Mark, The impact of the MIT-BIH Arrhythmia Database, IEEE Eng. in Med. and Biol. 20(3), 2001.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Un enregistrement de la base d'arythmie, lu et ses battements detectes.
+recording = ecglab.readwfdb('100');
+disp(recording.leads)
+disp(numel(recording.annotations.sample))]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.writewfdb">ecglab.writewfdb</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

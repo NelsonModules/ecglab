@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.rhythm</keyword>
+  <short_description>Nommer le rythme et trouver les episodes de fibrillation auriculaire a partir de la serie RR.</short_description>
+  <syntax>
+    <syntax_item>rhythm = ecglab.rhythm(X)</syntax_item>
+    <syntax_item>rhythm = ecglab.rhythm(X, 'Nom', valeur, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>un ecglab.recording, dont les battements sont trouves par ecglab.detect sauf si Beats est donne ; une struct ecglab.beats ; ou un simple vecteur signal en millivolts dont la frequence d'echantillonnage est donnee par Rate et dont les battements sont alors detectes.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Nom, valeur</param_name>
+      <param_description>options en paires nom et valeur, sans distinction de casse : Beats (les battements a nommer, une struct ecglab.beats ou un vecteur d'indices d'echantillon a base un), Method (la methode de detection quand les battements sont detectes, par defaut 'pantompkins'), Lead (la derivation a detecter, un nom ou un indice de colonne), Rate (la frequence d'echantillonnage en hertz, requise quand X est un vecteur), Window (la fenetre glissante en battements, 'auto' valant 128, plafonnee aux battements d'un enregistrement court), Step (le pas entre fenetres en battements, par defaut 1), Waves (une sortie d'ecglab.delineate pour que l'absence d'onde P rejoigne les conditions), MinEpisode (le plus court episode en secondes, par defaut 30), Tolerance (la tolerance de l'entropie d'echantillon comme fraction de la RR moyenne, par defaut 0,1), Cosen (le seuil du coefficient d'entropie d'echantillon, par defaut -1), Irregularity (le seuil de RMSSD normalisee, par defaut 0,1) et Pabsent (la part minimale des battements d'une fenetre avec une onde P absente pour la condition P, par defaut 0,5).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>rhythm</param_name>
+      <param_description>une struct ecglab.rhythm : kind 'ecglab.rhythm', episodes (une struct de vecteurs colonnes onset et offset en secondes et label un cellstr dans 'N', 'AFIB', 'AFL', 'other' qui pavent la plage analysee), perBeat (un label par battement), afBurden (la part du temps analyse en fibrillation auriculaire) et settings (la fenetre, le pas, les seuils, l'usage ou non d'une delineation, la frequence et la plage analysee).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>La fibrillation auriculaire est la reponse ventriculaire irreguliere a une oreillette qui fibrille : la serie RR perd a la fois sa regularite et sa predictibilite a court terme, et l'onde P disparait. Une fenetre glissante de Window battements n'est dite fibrillation que lorsque trois conditions tiennent ensemble sur sa serie RR, car chacune seule est trompee par ce que les autres attrapent. Le coefficient d'entropie d'echantillon (Lake et Moorman 2011) est au-dessus de son seuil, donc la serie est imprevisible ; la racine carree moyenne des differences RR successives normalisee est au-dessus de son seuil, donc elle est irreguliere ; et, quand une delineation est donnee par Waves, l'onde P est absente sur la plupart des battements de la fenetre.</p>
+    <p>Le coefficient d'entropie d'echantillon est l'entropie d'echantillon a une longueur de motif de un, avec une tolerance d'une petite fraction de la RR moyenne, plus un terme de densite, le log de deux fois la tolerance moins le log de la RR moyenne (Lake et Moorman 2011). Comme la tolerance est ici une fraction de la RR moyenne, ce terme de densite est une constante, si bien que le coefficient est l'entropie d'echantillon decalee d'une valeur fixe ; le nombre ne suit pas la frequence cardiaque, mais cette independance vient de la tolerance relative elle-meme (mettre a l'echelle chaque intervalle met la tolerance a la meme echelle, donc l'entropie d'echantillon ne change pas), et non du terme de densite. Un rythme regulier se retrouve a presque chaque motif et obtient une valeur tres basse ; la fibrillation ne se retrouve presque nulle part et obtient une valeur proche de zero, ce qui fait qu'un seuil pres de moins un les separe. Les seuils sont tires de la litterature (etude section 5.8), jamais ajustes sur une base de test, et ils sont gardes dans rhythm.settings.</p>
+    <p>Chaque battement recoit le label de la majorite des fenetres qui le couvrent, et les episodes sont les plages maximales d'un meme label. Une plage plus courte que MinEpisode est lissee : un bref retour au sinus au milieu d'une longue fibrillation est ponte pour ne pas scinder un episode en trois, et une breve fibrillation parasite est supprimee pour que le bruit n'invente pas d'episode. La charge est la part de la plage analysee que tiennent les episodes de fibrillation. La detection et ses episodes vont directement a ecglab.validate avec Kind 'episodes' pour les statistiques d'episode et de duree d'ANSI/AAMI EC57, mesurees sur la base de fibrillation auriculaire par data/make_ecglab_rhythm.m. Cette base note un seul rythme, la fibrillation auriculaire, fixe : ecglab.validate possede son jeu d'options et ne porte aucune option pour nommer un autre rythme, donc un argument 'Label' est refuse comme inconnu.</p>
+    <p>Tout est calcule sur des fenetres et des battements, jamais sur des echantillons : la RR moyenne, l'irregularite et la part d'absence de P de chaque fenetre viennent de sommes cumulees en une passe, et l'entropie n'est evaluee que sur les fenetres qui ont deja franchi l'irregularite. Logiciel de recherche, pas un dispositif medical. ecglab est pour la recherche et l'education. Ce n'est pas un dispositif medical et ne doit pas etre utilise pour un diagnostic clinique, une surveillance de patient, une decision de traitement, ou tout but medical.</p>
+  </description>
+  <used_function />
+  <bibliography>Lake and Moorman, Accurate estimation of entropy in very short physiological time series: the problem of atrial fibrillation detection in implanted ventricular devices, American Journal of Physiology 300:H319-H325, 2011. Tateno and Glass, Automatic detection of atrial fibrillation using the coefficient of variation and density histograms of RR and deltaRR intervals, Medical and Biological Engineering and Computing 39:664-671, 2001.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Nommer une nuit de fibrillation simulee et lire sa charge de fibrillation.
+recording = ecglab.simulate('Seconds', 90, 'Fibrillation', true, 'Seed', 7);
+rhythm = ecglab.rhythm(recording);
+fprintf('charge FA %.2f\n', rhythm.afBurden);]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Detecter le rythme d'un enregistrement de la base FA et le comparer a ses marques.
+recording = ecglab.reference('afdb/04015');
+detected = ecglab.rhythm(recording);
+agreement = ecglab.validate(detected, recording, 'Kind', 'episodes');
+fprintf('Se duree %.2f  +P %.2f\n', agreement.durationSe, agreement.durationPpv);]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.validate">ecglab.validate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+  </see_also>
+</xmldoc>

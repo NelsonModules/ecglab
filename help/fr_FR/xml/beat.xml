@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.beat</keyword>
+  <short_description>Tracer un battement avec les preuves du detecteur, de la delineation et de la classe.</short_description>
+  <syntax>
+    <syntax_item>handle = ecglab.beat(X)</syntax_item>
+    <syntax_item>handle = ecglab.beat(X, 'Name', value, ...)</syntax_item>
+    <syntax_item>handle = ecglab.beat(figure, command)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>un ecglab.recording (ses battements sont detectes, delineeses et classes, sauf si une analyse est associee par l'option Analysis) ou un ecglab.analysis issu de ecglab.analyze (ses battements, ses ondes et ses classes sont lus, et rien n'est recalcule).</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>figure</param_name>
+      <param_description>une vue de battement ouverte, dans la seconde forme : la figure qu'un appel precedent a renvoyee. La commande la deplace alors vers un autre battement.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>command</param_name>
+      <param_description>le deplacement, dans la seconde forme : 'next', 'previous', un entier positif (ce battement) ou {'at', seconds} (le battement le plus proche de ce moment, la fenetre centree dessus).</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options en paires nom et valeur, comparees sans tenir compte de la casse : Beat (le battement d'ouverture, un indice a base un, 1 par defaut), At (un moment en secondes ou ouvrir a la place, le battement le plus proche ; un de Beat ou At a la fois), Span (les secondes de trace autour du battement, 1.2 par defaut), Detector (le detecteur QRS quand X est un recording et qu'aucune analyse n'est associee, 'pantompkins' par defaut), Analysis (un ecglab.analysis a associer au recording X pour ne rien recalculer ; Scoring est un alias accepte), Interactive (true, la valeur par defaut quand Visible vaut 'on', lance la boucle de controle et ne rend pas la main avant la fermeture de la figure ; false trace une fois et rend la main, ce qu'utilisent les tests), Visible ('on' par defaut ou 'off'), OutputImage (un fichier ou la vue courante est enregistree, sans aucun controle dedans), Title (un titre a vous).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>handle</param_name>
+      <param_description>la figure. Son UserData porte tout ce dont un retrace a besoin : le recording, les battements, les ondes, les classes, les preuves et le battement courant, afin que la seconde forme trouve le tout sur la figure.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Ceci est une image d'un signal, PAS un document clinique. ecglab est un logiciel de recherche et d'enseignement, pas un dispositif medical ; une vue de battement est tracee pour la recherche et l'education et ne doit pas servir au diagnostic, a la surveillance ou a toute fin medicale. Une classe est une supposition d'un classifieur, jamais un constat.</p>
+    <p>La vue de battement est le microscope de lecture du module : un battement, et POURQUOI le module l'a detecte et classe ainsi. Le trace brut est dessine autour du battement choisi sur le meme papier calibre que la bande, a 25 mm/s et 10 mm/mV, sur une grille rouge reglee a 1 mm et 5 mm. La delineation y est marquee : un trait a chaque point de repere des ondes P, QRS et T, un point a chaque sommet d'onde, et les trois sommets P, R et T nommes. Les debuts et les fins ne sont PAS etiquetes sur le trace, car onze etiquettes encombreraient un battement de 30 mm ; ils se lisent sur les crochets d'intervalle PR, QRS et QT traces sous le trace, chacun etiquete de la valeur en millisecondes que la delineation a mesuree.</p>
+    <p>Sous le trace se trouve la preuve propre du detecteur pour ce battement, sur la meme fenetre horizontale : la serie que le detecteur a seuillee (la caracteristique integree d'un detecteur a une methode, ou la magnitude filtree en bande d'un consensus), le seuil adaptatif en vigueur, et les battements detectes marques sur la caracteristique. C'est le POURQUOI de la detection, tire directement de beats.evidence, la raison pour laquelle un detecteur garde son travail et pas seulement sa reponse.</p>
+    <p>A droite, une carte de classe nomme la classe AAMI du battement comme un badge colore (N normal, S ectopique supraventriculaire, V ectopique ventriculaire, F fusion, Q inclassable) avec sa confiance, la confiance etant la probabilite a posteriori de la classe gagnante par un softmax des scores de l'analyse discriminante lineaire. En dessous, les caracteristiques interpretables sur lesquelles la decision a repose sont dessinees en barres, chacune remplie selon la place du battement dans l'etendue de cette caracteristique sur l'enregistrement, et les intervalles cliniques du battement (PR, QRS, QT, QTc de Bazett et RR) sont listes en millisecondes.</p>
+    <p>La seconde forme, ecglab.beat(figure, command), est le seul chemin qui change une vue ouverte : elle DEPLACE les objets que la figure porte deja et n'en cree aucun, de sorte que le nombre d'objets d'une vue est le meme a chaque battement, et c'est ce qu'appellent les boutons, les fleches et une console qui pilote la vue. Une vue interactive (le defaut quand elle est visible) lance une boucle de controle qui tient jusqu'a la fermeture de la figure ; une vue tracee avec 'Interactive', false trace une fois et rend la main, et aucun controle n'y est dessine, donc une page enregistree n'est que les axes.</p>
+    <p>Les trois axes portent les tags 'ecglab.beat.trace', 'ecglab.beat.evidence' et 'ecglab.beat.card'. Toute la page est une poignee de lignes et quelques petits polygones, aucun remplissage par battement, donc elle s'ouvre et se deplace en bien moins d'une seconde.</p>
+  </description>
+  <used_function />
+  <bibliography>Pan et Tompkins, A real-time QRS detection algorithm, IEEE Transactions on Biomedical Engineering 32(3):230-236, 1985 ; Martinez et al., A wavelet-based ECG delineator: evaluation on standard databases, IEEE Transactions on Biomedical Engineering 51(4):570-581, 2004 ; de Chazal, O'Dwyer et Reilly, Automatic classification of heartbeats using ECG morphology and heartbeat interval features, IEEE Transactions on Biomedical Engineering 51(7):1196-1206, 2004.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Ouvrir la vue sur le cinquieme battement d'un enregistrement simule et avancer.
+recording = ecglab.simulate('Seconds', 30, 'Ectopic', 0.1, 'Seed', 1);
+handle = ecglab.beat(recording, 'Beat', 5, 'Interactive', false);
+ecglab.beat(handle, 'next');]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Reutiliser une analyse complete pour ne pas recalculer le battement, et enregistrer.
+recording = ecglab.simulate('Seconds', 30, 'Seed', 2);
+analysis = ecglab.analyze(recording);
+ecglab.beat(analysis, 'Beat', 3, 'OutputImage', [tempdir(), '/beat.png']);]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.strip">ecglab.strip</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.chart">ecglab.chart</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.classify">ecglab.classify</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

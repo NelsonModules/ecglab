@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.report</keyword>
+  <short_description>Produire le rapport d'etude, portant la clause de logiciel de recherche.</short_description>
+  <syntax>
+    <syntax_item>text = ecglab.report(X)</syntax_item>
+    <syntax_item>text = ecglab.report(X, 'Nom', valeur, ...)</syntax_item>
+    <syntax_item>ecglab.report(X)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>une analyse produite par ecglab.analyze, ou un ecglab.recording. Un enregistrement est d'abord analyse (avec ecglab.analyze quand cette fonction est presente, sinon avec les fonctions d'analyse individuelles), puis le rapport est produit a partir de l'analyse.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Nom, valeur</param_name>
+      <param_description>options par paires nom et valeur, insensibles a la casse : File (un chemin ou le texte est aussi ecrit ; par defaut '', aucun), Language ('en' par defaut, ou 'fr' pour un rapport en francais sans accents), Width (la colonne de repli en caracteres ; par defaut 78).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>text</param_name>
+      <param_description>le rapport sous forme de chaine de caracteres avec des retours a la ligne. Sans argument de sortie le rapport est affiche et rien n'est renvoye ; avec un argument de sortie le texte est renvoye et rien n'est affiche.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Le rapport est un texte simple, en sections, et ses TOUTES PREMIERES lignes sont la clause de logiciel de recherche : ecglab est un logiciel de recherche et d'enseignement, pas un dispositif medical. Aucun nombre du rapport n'est calcule ici ; chaque valeur est lue dans les structures de l'analyse, et un champ que l'analyse a laisse vide est affiche "non disponible" avec une raison plutot qu'une valeur inventee.</p>
+    <p>Chaque intervalle est affiche a cote de la plage normale AHA/ACC/HRS, avec une marque lorsqu'il en sort. La marque est un indicateur de MESURE, jamais un diagnostic : le rapport indique ou se situe un nombre, sans jamais qualifier une mesure d'anormale ni la lire comme un constat clinique.</p>
+    <p>Les sections, dans l'ordre : le sujet, la source et le debut de l'enregistrement quand il est connu ; la duree, la frequence d'echantillonnage et les derivations ; la qualite du signal (la fraction utilisable, et une ligne lorsqu'une derivation a ete refusee) ; la frequence cardiaque (moyenne et intervalle) et le rythme (le label dominant, et la charge de fibrillation auriculaire le cas echeant, presentee comme une mesure) ; les intervalles PR, QRS, QT et le QT corrige par les quatre formules (Bazett, Fridericia, Framingham, Hodges), chacun a cote de sa plage normale ; l'axe frontal avec son label quand les derivations ont ete mesurees ; les battements comptes par classe ANSI/AAMI N, S, V, F, Q avec leur part ; le resume de la variabilite de la frequence cardiaque (SDNN, RMSSD, pNN50, LF/HF) quand elle a ete mesuree ; et un pied de page de provenance nommant le detecteur, la version de Nelson et la version du module, et repetant une fois qu'il s'agit d'un logiciel de recherche.</p>
+    <p>Logiciel de recherche, pas un dispositif medical. ecglab est destine a la recherche et a l'enseignement. Ce n'est pas un dispositif medical et ne doit pas servir au diagnostic clinique, a la surveillance des patients, aux decisions therapeutiques, ni a aucun usage medical.</p>
+  </description>
+  <used_function />
+  <bibliography />
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Afficher le rapport d'etude d'un enregistrement simule a douze derivations.
+recording = ecglab.simulate('Seconds', 30, 'Rate', 500, 'Leads', 12, 'Seed', 1);
+ecglab.report(recording);]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Recuperer le rapport sous forme de texte et l'ecrire aussi dans un fichier.
+recording = ecglab.simulate('Seconds', 30, 'Rate', 500, 'Leads', 12, 'Seed', 1);
+text = ecglab.report(recording, 'File', [tempdir(), 'ecg_report.txt']);
+disp(text(1:60))]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.analyze">ecglab.analyze</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.leads">ecglab.leads</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.hrv">ecglab.hrv</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.rhythm">ecglab.rhythm</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

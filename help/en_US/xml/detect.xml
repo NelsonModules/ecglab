@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.detect</keyword>
+  <short_description>Detect the heart beats, by one method or a consensus.</short_description>
+  <syntax>
+    <syntax_item>beats = ecglab.detect(X)</syntax_item>
+    <syntax_item>beats = ecglab.detect(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>an ecglab.recording (one lead of it is chosen) or a plain signal vector in millivolts whose sampling rate is given as Rate.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: Method (detector name, default 'pantompkins', also 'hamilton', 'consensus', or any other private detector that exists), Lead (the lead to read, a name or a column index, default the first of MLII, II, I, V5, or the first lead), Rate (sampling rate in hertz, required when X is a vector), Refractory (shortest interval between two beats in seconds, default 0.2), Polarity ('auto' by default, the sign of the skewness of the band-passed signal, which reads the upright or inverted lean the QRS stamps on the trace, or 'positive' or 'negative'), Snap (true by default, snaps each beat to the R peak within 60 ms), Methods (for consensus, the list of methods, default all available), Votes (for consensus, the least number of methods that must agree, default the majority), Window (for consensus, the clustering gap in seconds, default 0.06).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>beats</param_name>
+      <param_description>an ecglab.beats struct: kind 'ecglab.beats', sample (K x 1, 1-based), time (seconds), rr (K x 1 seconds, NaN on the first), method, lead, settings (every parameter used) and evidence (the series the method thresholded, named feature, its threshold and the band-passed filtered signal, each N x 1; for a consensus, votes per beat and the beats each method contributed).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>One dispatcher, one interface, many detectors. A method is a private function that returns the fiducial samples and the evidence from a signal and a rate; adding such a file to the private folder adds a method and nothing else need change, and the methods that exist are discovered at call time. Every method's beats are then placed the same way: snapped to the extremum of the 5 to 15 Hz band-passed signal within 60 ms of the detector's fiducial, in the chosen polarity, so the RR series is comparable across methods and against a database whose marks sit on the QRS peak.</p>
+    <p>Pan and Tompkins (1985) band pass the signal to 5 to 15 Hz, take the slope, square it and integrate over the 150 ms of a wide complex, then keep the hills that stand above an adaptive threshold set a quarter of the way from a running noise level to a running signal level. A refractory period, a T-wave slope test and a search back for beats missed when a long pause opens complete the decision. Measured on the thirty minute record 100 of the arrhythmia database: sensitivity 1.0000, positive predictivity 1.0000, in 0.8 s.</p>
+    <p>Hamilton (2002) shares that shape with a higher band (8 to 16 Hz), a single rectified derivative rather than a squared one, an 80 ms average, and levels taken as the median of the last eight peaks of each kind, which one bad peak cannot drag. Measured on the same record: sensitivity 1.0000, positive predictivity 1.0000, in 0.8 s.</p>
+    <p>Christov (2004) builds one threshold from three parts added together. Two short moving averages, of 20 ms (one mains period) and 28 ms, clean the power line and the muscle noise away; the absolute derivative then makes a complex lead whose every beat is a positive hill. The threshold a hill must clear is the sum of M, a steep-slope level held high for 200 ms after a beat and decaying over the following second; F, an integrating level that follows the slow drift of the signal; and R, a beat-expectation level that turns negative to lower the threshold once two thirds of the expected interval have passed. A hill soon after a beat whose slope is under half the last beat's is rejected as its T wave. Measured on the thirty minute record 100 of the arrhythmia database: sensitivity 1.0000, positive predictivity 1.0000, in 0.8 s. Over all 48 records its gross sensitivity is 0.9954; its false positives concentrate on the ventricular flutter of record 207 and the paced records, episodes the reference standard sets apart.</p>
+    <p>Engelse and Zeelenberg (1979), in the single scan form Lourenco and colleagues modified (2012), find a complex by its SHAPE, not the size of one hill. A differentiator and a binomial low-pass make a signal that swings up then down at a QRS; a swing up through an adaptive level M is a candidate, confirmed when it is answered within 160 ms by a swing the other way past a separate negative level that tracks the recent down swings. The biphasic test, which a P or T wave cannot pass, lets M sit low enough to catch a faint or ectopic complex. Measured on the same record: sensitivity 0.9996, positive predictivity 1.0000, in 0.6 s.</p>
+    <p>Kalidas and Tamil (2017) isolate the QRS band with the stationary wavelet transform (db3) rather than a band-pass filter, computed by the a trous algorithm because the transform is not in the core. The detail of the level chosen from the rate so its band sits over the QRS (level 4 at 360 Hz, the 11 to 22 Hz band) is added to a measured fraction of the next lower detail, so a wide ventricular complex whose energy sits an octave below is not missed; the sum is squared into an energy, integrated over 150 ms, and thresholded by the adaptive peak logic of Pan and Tompkins without its T-wave test, which the wavelet band has already made unnecessary. Measured over the 48 records of the arrhythmia database: gross sensitivity 0.9955, positive predictivity 0.9936, about 0.9 s on the thirty minute record.</p>
+    <p>Elgendi (2013) detects with two moving averages and no running threshold, which is what makes it fast. The signal is band-passed to 8 to 20 Hz, its negative part clipped to zero and squared, then smoothed by a short average the width of a QRS (97 ms) and a long one the width of a beat (611 ms). A block of interest opens where the short average rises above the long one raised by a small fraction of the mean energy; a block at least a QRS wide holds one beat, placed at its largest band-passed sample, and blocks closer than 0.3 s are merged into the larger. Measured over the same 48 records: gross sensitivity 0.9980, positive predictivity 0.9976, about 0.4 s on the thirty minute record.</p>
+    <p>Zong, Moody and Jiang (2003) transform the signal by a different route: a low-pass filter that notches the mains and keeps a 16 Hz character, then a curve length transform that sums, over the 130 ms of a complex, the length sqrt(dt^2 + dy^2) of the filtered trace, which a steep QRS lengthens far more than a gentle wave. A QRS is marked where that length crosses an adaptive threshold held at a third of a running peak estimate; this detector marks the QRS ONSET, not the peak, scanning back to the foot of the length rise, and keeps the onset and the J point in the evidence for the delineator, the fiducial returned for snapping being the largest deflection just after the onset. Measured on the thirty minute record 100 of the arrhythmia database: sensitivity 0.9995, positive predictivity 1.0000, in 0.8 s.</p>
+    <p>The consensus runs several methods, pools their snapped fiducials, clusters the pooled samples by a gap of Window seconds, and keeps a cluster only where at least Votes distinct methods agree, placing the beat at the median sample. It removes the false detection each method makes on its own while keeping the beats they all find.</p>
+  </description>
+  <used_function />
+  <bibliography>Pan and Tompkins, A real-time QRS detection algorithm, IEEE Transactions on Biomedical Engineering 32(3):230-236, 1985; Hamilton, Open source ECG analysis, Computers in Cardiology 29:101-104, 2002; Christov, Real time electrocardiogram QRS detection using combined adaptive threshold, BioMedical Engineering OnLine 3:28, 2004; Engelse and Zeelenberg, A single scan algorithm for QRS-detection and feature extraction, Computers in Cardiology 6:37-42, 1979, as modified by Lourenco, Silva, Leite, Lourenco and Fred, Real time electrocardiogram segmentation for finger based ECG biometrics, BIOSIGNALS 2012; Kalidas and Tamil, Real-time QRS detector using stationary wavelet transform for variable low-cost ECG monitoring, IEEE BIBE 2017; Elgendi, Jonkman and De Boer, Frequency bands effects on QRS detection, BIOSIGNALS 2010; Elgendi, Fast QRS detection with an optimized knowledge-based method: evaluation on 11 standard ECG databases, PLOS ONE 8(9):e73557, 2013; Zong, Moody and Jiang, A robust open-source algorithm to detect onset and duration of QRS complexes, Computers in Cardiology 30:737-740, 2003.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Thirty seconds of simulated signal, detected with Pan and Tompkins.
+recording = ecglab.simulate('Seconds', 30, 'Seed', 1);
+beats = ecglab.detect(recording, 'Method', 'pantompkins');
+bpm = 60 / median(beats.rr, 'omitnan')]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% A consensus of two methods, keeping only the beats both agree on.
+recording = ecglab.simulate('Seconds', 60, 'Noise', 0.1, 'Seed', 2);
+beats = ecglab.detect(recording, 'Method', 'consensus', ...
+  'Methods', {'pantompkins', 'hamilton'}, 'Votes', 2);
+beats.evidence.votes]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.validate">ecglab.validate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

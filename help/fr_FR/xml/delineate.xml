@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.delineate</keyword>
+  <short_description>Reperer les ondes P, QRS et T et les intervalles.</short_description>
+  <syntax>
+    <syntax_item>waves = ecglab.delineate(X)</syntax_item>
+    <syntax_item>waves = ecglab.delineate(X, 'Nom', valeur, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>un ecglab.recording (delimite sur la derivation nommee par Lead, ou sur chaque derivation puis fusionne lorsque Lead vaut 'all' ou que plusieurs sont nommees) ou un simple vecteur signal en millivolts dont la frequence d'echantillonnage est donnee par Rate.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Nom, valeur</param_name>
+      <param_description>options en paires nom et valeur, sans egard a la casse : Beats (une structure de battements issue de ecglab.detect sur laquelle accrocher la delimitation ; en son absence les battements sont detectes avec la methode par defaut), Lead (un nom, un indice de colonne, plusieurs de l'un ou l'autre, ou 'all' ; par defaut la premiere derivation de type ECG), Rate (la frequence d'echantillonnage en hertz, requise quand X est un vecteur), Clean (vrai par defaut : enleve la ligne de base avec ecglab.clean avant de delimiter, car la recherche des ondes P et T par ondelettes est deroutee par la derive ; faux delimite le signal tel quel), Method (le detecteur utilise quand Beats est absent), Qtc (les formules de QT corrige a calculer : 'all' par defaut, un nom de formule, ou une liste de 'bazett', 'fridericia', 'framingham', 'hodges'), BoundaryFraction (la fraction du maximum de pente de la borne du QRS a laquelle le debut et la fin sont lus, recherches vers l'exterieur depuis le maximum ; par defaut la valeur clinique qui place le debut et la fin au pied du complexe pour qu'un vrai QRS ait une largeur clinique, et a ce defaut clinique la fin du T est de meme lue jusqu'a son pied par la methode de la tangente pour que l'intervalle QT ne soit pas raccourci de dizaines de ms ; une valeur de 1 place les bornes du QRS et la fin du T sur la pente la plus raide elle-meme, la convention d'un simulateur a ondes gaussiennes).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>waves</param_name>
+      <param_description>la structure d'ondes du modele de donnees : kind 'ecglab.waves' ; columns {'Pon','Ppeak','Poff','QRSon','Q','R','S','QRSoff','J','Ton','Tpeak','Toff'} ; sample et time (K x 12, indices d'echantillon en base un et secondes, NaN pour une onde ABSENTE, ce qui est un resultat valide et non un echec) ; lead (la derivation delimitee, ou l'ensemble fusionne) ; intervals (une structure de vecteurs colonnes pr, qrs, qt en ms et qtc une structure avec bazett, fridericia, framingham, hodges en ms) ; morphology (le code de morphologie de l'onde T par battement : 0 normale, 1 inversee, 2 monophasique positive, 3 monophasique negative, 4 biphasique negative-positive, 5 biphasique positive-negative) ; et settings. Lorsque plusieurs derivations sont delimitees, waves porte aussi perLead (une structure par derivation avec ses propres sample et time), et les sample et time rendus sont les marques globales fusionnees.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>La methode est celle des maxima du module de l'ondelette de Martinez, Almeida, Olmos, Rocha et Laguna (IEEE Transactions on Biomedical Engineering 51(4):570-581, 2004). La transformee en ondelettes stationnaire avec la spline quadratique est calculee sur la derivation nettoyee ; son detail a une echelle est la derivee du signal lisse a cette echelle, de sorte qu'une onde apparait comme une paire de maxima du module de signes opposes encadrant un passage par zero qui est le sommet de l'onde, le debut et la fin etant les maxima exterieurs de la paire.</p>
+    <p>Le QRS est ancre sur le pic R detecte a une echelle fine (echelle 2^2 a 250 Hz, decalee avec la frequence d'echantillonnage pour garder la meme bande physique) : le pic R est le passage par zero entre les maxima positif et negatif de la montee et de la descente du R, Q et S sont les passages par zero voisins, et le debut et la fin (cette derniere est J) sont les pentes significatives les plus exterieures du complexe.</p>
+    <p>L'onde T est cherchee apres la fin du QRS, jusqu'a un point fixe par l'intervalle RR pour qu'un rythme rapide ne fasse pas courir le T dans le P suivant, a une echelle grossiere ou sa pente lente apparait tandis que la queue du QRS, encore d'un seul signe, ne forme pas de paire concurrente. L'onde P est cherchee en arriere depuis le debut du QRS, sa portee fixee par le RR ; a l'echelle fine la descente du P se fond dans le front montant du QRS, de sorte que le debut et le sommet y sont lus et la fin une echelle plus grossiere, ou le front du QRS s'est deplace et la fin du P se tient en extremum net. Une onde dont la paire de pentes ne franchit pas le seuil est absente (NaN) : un P est reellement absent dans la fibrillation auriculaire et apres un battement ectopique ventriculaire, et c'est pourquoi une onde absente est un resultat valide et non un echec. Un P n'est accepte que s'il est une deflexion complete laissant un segment PR isoelectrique avant le QRS, ce qui permet de distinguer d'un vrai P le front montant d'un complexe ventriculaire large et l'onde f de fibrillation.</p>
+    <p>Les intervalles sont PR (debut du P au debut du QRS), QRS (debut a fin) et QT (debut du QRS a fin du T), en millisecondes, une ligne par battement ; un battement auquel manque une borne porte NaN. Le QT corrige est calcule par quatre formules de frequence avec le RR en secondes et le QT en ms : Bazett QT / sqrt(RR), Fridericia QT / RR^(1/3), Framingham QT + 154(1 - RR), Hodges QT + 1.75(FC - 60) avec FC = 60 / RR.</p>
+    <p>Lorsque plusieurs derivations sont delimitees, les marques globales suivent la regle de l'AHA pour une mesure multivoie : une onde commence des qu'elle a commence sur une derivation et finit quand elle a fini sur toutes, donc un debut prend la marque la plus precoce parmi les derivations, une fin la plus tardive, et un sommet la mediane des derivations qui l'ont vu. Le QRS et le QT globaux sont ainsi mesures sur les derivations superposees.</p>
+    <p>Mesure contre la verite du simulateur (un enregistrement de 60 s a 500 Hz a 60 bpm, les bornes plantees a un ecart-type de la gaussienne de chaque onde), l'erreur signee par point de repere a une moyenne inferieure a 7 ms et un ecart-type inferieur a 11 ms sur chacune des douze marques, et plus de 98 pour cent des battements portent un QRS delimite. Mesure sur cette version, une derivation unique de trente minutes a 500 Hz (900000 echantillons) est delimitee en environ 3 s, dominee par la detection des battements et la transformee en ondelettes.</p>
+  </description>
+  <used_function />
+  <bibliography>Martinez, Almeida, Olmos, Rocha et Laguna, A wavelet-based ECG delineator: evaluation on standard databases, IEEE Transactions on Biomedical Engineering 51(4):570-581, 2004 ; Bazett, An analysis of the time-relations of electrocardiograms, Heart 7:353-370, 1920 ; Fridericia, Die Systolendauer im Elektrokardiogramm bei normalen Menschen und bei Herzkranken, Acta Medica Scandinavica 53:469-486, 1920.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Les ondes et le QT median d'un enregistrement simule.
+recording = ecglab.simulate('Seconds', 30, 'Rate', 500, 'Seed', 1);
+waves = ecglab.delineate(recording);
+median(waves.intervals.qt, 'omitnan')]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Douze derivations delimitees et fusionnees ; le debut du QRS global est le plus precoce.
+recording = ecglab.simulate('Seconds', 20, 'Rate', 500, 'Leads', 12, 'Seed', 2);
+waves = ecglab.delineate(recording, 'Lead', 'all');
+numel(waves.perLead)]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.clean">ecglab.clean</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+    <history_item>
+      <history_version>0.1.2</history_version>
+      <history_description>fin du T lue jusqu'au pied clinique par la methode de la tangente</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

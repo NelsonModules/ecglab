@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.writeedf</keyword>
+  <short_description>Ecrire un enregistrement au format EDF+.</short_description>
+  <syntax>
+    <syntax_item>ecglab.writeedf(file, recording)</syntax_item>
+    <syntax_item>ecglab.writeedf(file, recording, 'RecordSeconds', s)</syntax_item>
+    <syntax_item>info = ecglab.writeedf(file, recording)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>file</param_name>
+      <param_description>le chemin du fichier EDF+ a ecrire.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>recording</param_name>
+      <param_description>une structure d'enregistrement, telle que rend ecglab.readedf.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>s</param_name>
+      <param_description>la duree d'un enregistrement de donnees en secondes (une par defaut).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>info</param_name>
+      <param_description>ce qui a ete ecrit : le nombre d'enregistrements, les echantillons par enregistrement, la plage physique employee pour chaque derivation et la quantification qu'elle implique, et si le dernier enregistrement a ete complete.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>EDF est ce qu'ecrit un enregistreur et un laboratoire du sommeil ou de Holter, donc un enregistrement construit ou traite dans le module est ecrit en EDF+C pour etre ouvert par tout outil EDF et relu par ecglab.readedf sans perte au-dela de la quantification.</p>
+    <p>La plage physique de chaque derivation est son propre minimum et son maximum avec une petite marge, pour que les valeurs extremes ne soient pas collees aux butees numeriques, et la plage numerique est le seize bits signe complet -32768..32767. La quantification vaut donc <b>(pmax - pmin) / 65535</b>, que info donne par derivation, pour qu'un appelant connaisse l'erreur de reconstruction sans relire le fichier.</p>
+    <p>Le champ patient est <b>recording.info.subject</b>, ecrit <b>X X X X</b> (le patient anonyme du format) quand il est vide ou anonyme. La date et l'heure de debut sont prises dans info.</p>
+    <p>Un signal 'EDF Annotations' porte les annotations de l'enregistrement. Chaque enregistrement de donnees s'ouvre par une TAL d'horodatage de son propre instant de debut, ce qu'exige EDF+, puis une TAL par annotation qui tombe dans sa fenetre : l'instant, et le symbole comme texte, ou le texte aux quand le symbole est le symbole de note.</p>
+    <p>La longueur de l'enregistrement n'est pas forcement un nombre entier d'enregistrements ; le dernier enregistrement partiel est complete par le minimum numerique, et <b>info.padded</b> le dit, parce que ces echantillons de remplissage se relisent comme le minimum physique de chaque derivation.</p>
+    <p>Tous les instants sont formates en une passe et le bloc de donnees est assemble et ecrit en une passe : mesure sur une heure de trois derivations a 500 Hz, l'ecriture est sous la seconde, contre six secondes quand les instants etaient formates un enregistrement a la fois.</p>
+  </description>
+  <used_function />
+  <bibliography>Kemp and Olivan, European data format 'plus' (EDF+), Clinical Neurophysiology 114(9), 2003.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Ecrire un enregistrement a deux derivations et le relire.
+recording = ecglab.readedf('record.edf');
+info = ecglab.writeedf('copy.edf', recording);
+back = ecglab.readedf('copy.edf');]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readedf">ecglab.readedf</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>version initiale</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

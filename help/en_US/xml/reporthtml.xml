@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.reporthtml</keyword>
+  <short_description>Render the study as a self-contained HTML page, printable to PDF.</short_description>
+  <syntax>
+    <syntax_item>html = ecglab.reporthtml(X)</syntax_item>
+    <syntax_item>html = ecglab.reporthtml(X, 'Name', value, ...)</syntax_item>
+    <syntax_item>ecglab.reporthtml(X, 'File', path)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>an analysis from ecglab.analyze, or an ecglab.recording (analysed first).</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: File (a path the HTML is written to; default '', none), Language ('en' by default, or 'fr' for French without accents), Detector (the QRS detector passed to ecglab.analyze, default 'pantompkins', used only when X is a recording), Prior (the classifier prior 'empirical' or 'uniform', used only when X is a recording), Lead (the lead the analysis reads, used only when X is a recording), Beat (the beat the one-beat page opens on; default 1), Graphics (the embedded page format: 'svg' by default, vector and crisp at any zoom and in print, or 'png' for a smaller raster), Visible ('off' by default, or 'on' for the drawn pages).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>html</param_name>
+      <param_description>the HTML page as a char array. The File option also writes it to disk. A call with neither an output argument nor a File is refused, so the report is never drawn and thrown away.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>The HTML report bundles the whole study into ONE self-contained file that opens in any browser and prints to PDF: the research-only disclaimer as a banner, the summary chart (ecglab.chart), the calibrated strip (ecglab.strip), one beat with the detector evidence (ecglab.beat), and the full text report (ecglab.report). The three pages are embedded as base64 images, so the file needs no side files, and every number is the text report's, so the HTML invents nothing.</p>
+    <p>The report is DRAWN, so it needs an advanced-CLI session with a figure. A page that cannot be drawn is left out rather than shown as a broken image, so a record that breaks one page still reports the rest.</p>
+    <p>The pages are embedded as SVG by default, so they stay vector and print crisp at any resolution; the strip and the beat are fully vector, and the chart keeps only its few fill lanes as embedded rasters. 'Graphics','png' embeds smaller raster images instead. A true multi-element PDF is not produced (Nelson has no PDF composer for a page of figures and text); the HTML is the portable document, and a browser prints it to PDF. The individual pages can also be saved as PDF directly with their own OutputImage option.</p>
+    <p>Research software, not a medical device. ecglab is for research and education. It is not a medical device and must not be used for clinical diagnosis, patient monitoring, treatment decisions, or any medical purpose.</p>
+  </description>
+  <used_function />
+  <bibliography />
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Write a self-contained HTML report of a simulated recording.
+recording = ecglab.simulate('Seconds', 20, 'Rate', 360, 'Leads', 12, 'Seed', 7);
+ecglab.reporthtml(recording, 'File', [tempdir(), 'ecg_report.html']);]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.report">ecglab.report</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.analyze">ecglab.analyze</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.chart">ecglab.chart</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.strip">ecglab.strip</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.beat">ecglab.beat</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.1</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

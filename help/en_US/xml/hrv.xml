@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.hrv</keyword>
+  <short_description>Heart rate variability by the Task Force definitions.</short_description>
+  <syntax>
+    <syntax_item>hrv = ecglab.hrv(X)</syntax_item>
+    <syntax_item>hrv = ecglab.hrv(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>an ecglab.recording (its beats are detected with ecglab.detect unless a beats struct is given as Beats), an ecglab.beats struct (its rr series is used), or a numeric vector read as RR intervals (Input 'rr', the default) or as R-peak times (Input 'peaks'), in seconds (Unit 'seconds', the default) or milliseconds (Unit 'ms').</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: Beats (a beats struct to use instead of detecting, default [] detect), Input ('rr' by default or 'peaks'), Unit ('seconds' by default or 'ms'), Range ([low high] seconds, intervals outside are removed first, default [0.3 2.0], [] disables it), Ectopic (the rule that flags an ectopic or erroneous NN: 'none', 'malik' by default, 'karlsson', 'kamath', 'acar', or a numeric fraction used as malik with that fraction), Interp (how a removed NN is replaced: 'linear' by default, 'spline' or 'none'), Method (the spectral estimator: 'welch' by default, 'lomb' or 'ar'), Resample (resampling rate in hertz for welch and ar, default 4), Detrend (detrend order for welch and ar, default 1 linear), Window (Welch window length in samples, a Hann window, default 256), ArOrder (autoregressive model order, default 16), ArMethod ('burg' by default or 'yulewalker'), Segment (segment length in seconds for SDANN and the SDNN index, default 300), EntropyMax (the longest NN series the entropies run on, a longer one is capped to its first EntropyMax intervals, default 3000).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>hrv</param_name>
+      <param_description>a struct of the data model: kind 'ecglab.hrv', with sub-structs 'time' (sdnn, sdann, sdnnIndex, rmssd, sdsd, nn50, pnn50, nn20, pnn20, meanNN, meanHR, triangularIndex, tinn, histogramBinWidth), 'frequency' (ulf, vlf, lf, hf powers in ms^2 with their peak frequencies, lfnu, hfnu, lfhf, totalPower), 'nonlinear' (sd1, sd2, sdRatio, ellipseArea, alpha1, alpha2, sampen, apen), 'nn' (the NN series used, in seconds, after ectopic handling), 'rejected' (how many intervals were removed and by which rule), and 'settings' (the ectopic rule and its threshold, the interpolation and its rate, the detrending, the estimator and its window, and the bands).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>The definitions are those of the 1996 Task Force of the European Society of Cardiology and the North American Society of Pacing and Electrophysiology; the non-linear measures follow the 2015 position paper. Every measure is taken on the normal-to-normal intervals, so two filters run first: a range filter removes the physically impossible intervals, then a named ectopic rule flags the intervals that jump too far from their accepted neighbours, because a single missed or extra beat halves or doubles an interval and so would dominate every variability measure. The flagged intervals are interpolated or dropped.</p>
+    <p>The time-domain measures are the standard's: SDNN is the standard deviation of the NN intervals, SDANN the spread of the means over five-minute segments, the SDNN index the mean of the spreads within those segments, RMSSD the root mean square of the successive differences, NN50 and NN20 the counts of differences over 50 and 20 ms. The geometric measures share one histogram whose bin width is the standard's 1/128 s = 7.8125 ms: the triangular index is the count of NN over the tallest bin, and TINN is the base of the triangle fitted to the histogram by least squares.</p>
+    <p>The frequency-domain measures are the band powers in the four bands ULF (below 0.003 Hz), VLF (0.003 to 0.04), LF (0.04 to 0.15) and HF (0.15 to 0.4 Hz), in ms^2, with the peak frequency of each band, the normalised units of LF and HF, the LF/HF ratio and the total power. The same band power changes with the estimator, so the estimator defines the number as much as the band does and is written into the settings. Welch and the autoregressive model resample the NN series to a uniform grid with a cubic spline and detrend it; the spline is built from its tridiagonal system here rather than through the core, whose spline is too slow on a long record. Lomb works on the uneven series with no resampling. The autoregressive spectrum is fitted by Burg's recursion or by the Yule-Walker equations and read in closed form.</p>
+    <p>The non-linear measures are the Poincare plot (SD1 across the line of identity, SD2 along it, their ratio and the ellipse area), detrended fluctuation analysis (the short-term exponent alpha1 over boxes of 4 to 16 beats and the longer alpha2 over 16 to 64), and the two entropies (sample and approximate entropy, embedding dimension 2 and tolerance 0.2 of the standard deviation). The entropies are quadratic in the series length, so a long night is capped and the length used is reported beside them.</p>
+    <p>Measured on record 16265 of the NSR Database (100243 beats over a full day, read from its own reference annotations): SDNN 165 ms, RMSSD 39 ms, LF/HF 2.6, alpha1 1.26, sample entropy 1.04, in about 5.5 s. On the simulator, whose RR series is driven by a bimodal spectrum with an LF/HF power ratio of 0.5, the Welch, autoregressive and Lomb estimators recover an LF/HF of 0.53, 0.56 and 0.54 with the LF peak near 0.10 Hz and the HF peak near 0.25 Hz.</p>
+  </description>
+  <used_function />
+  <bibliography>Task Force of the European Society of Cardiology and the North American Society of Pacing and Electrophysiology, Heart rate variability: standards of measurement, physiological interpretation and clinical use, Circulation 93:1043-1065, 1996; Sassi et al., Advances in heart rate variability signal analysis, Europace 17:1341-1353, 2015; Brennan, Palaniswami and Kamen, Do existing measures of Poincare plot geometry reflect nonlinear features of heart rate variability?, IEEE Transactions on Biomedical Engineering 48(11):1342-1347, 2001; Peng et al., Quantification of scaling exponents and crossover phenomena in nonstationary heartbeat time series, Chaos 5(1):82-87, 1995; Richman and Moorman, Physiological time-series analysis using approximate entropy and sample entropy, American Journal of Physiology 278:H2039-H2049, 2000.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% HRV of a simulated recording, with the planted LF/HF recovered.
+recording = ecglab.simulate('Seconds', 300, 'HeartRateStd', 5, 'Seed', 1);
+hrv = ecglab.hrv(recording);
+ratio = hrv.frequency.lfhf]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% HRV from a bare list of RR intervals in milliseconds, the autoregressive
+% estimator, and no ectopic rule.
+rr = 800 + 40 * randn(512, 1);
+hrv = ecglab.hrv(rr, 'Unit', 'ms', 'Method', 'ar', 'Ectopic', 'none');
+hrv.time.sdnn]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.validate">ecglab.validate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

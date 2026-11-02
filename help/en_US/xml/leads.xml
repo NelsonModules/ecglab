@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.leads</keyword>
+  <short_description>Derive the standard leads and measure the axis and intervals.</short_description>
+  <syntax>
+    <syntax_item>result = ecglab.leads(X)</syntax_item>
+    <syntax_item>result = ecglab.leads(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>an ecglab.recording that carries the limb leads I and II (and ideally the precordials V1 to V6), or a numeric matrix with one column per lead whose sampling rate is given as Rate and whose lead names are given as Leads.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: Rate (the sampling rate in hertz, required when X is a matrix), Leads (the lead names, one text per column, required when X is a matrix), Sex ('male' by default or 'female', which picks the QTc normal limit: 450 ms for men, 460 ms for women), Beats (a beats struct from ecglab.detect to hang the delineation on; when absent the beats are detected with the default method), Method (the detector used when Beats is absent).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>result</param_name>
+      <param_description>a struct: kind 'ecglab.leads'; derived (an ecglab.recording carrying the standard leads, the augmented leads and III filled in from I and II when absent); axis (a struct with degrees and label, the label 'normal', 'left', 'right' or 'extreme'); intervals (a struct with the global pr, qrs and qt in ms); qtc (a struct with bazett, fridericia, framingham and hodges in ms); heartRate (beats per minute); sokolowLyon (a struct with sV1, rV5, rV6, amplitude in mV and exceeds, present only when the precordials are present); and normal (a struct of the AHA/ACC/HRS reference ranges with an inRange flag per measurement).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>These are measurements and their reference ranges, NOT a diagnosis. ecglab is research and teaching software, not a medical device; a value outside a range is flagged here, never interpreted.</p>
+    <p>The six limb leads are exact linear combinations of I and II, so a recording that carries I and II carries them all: III = II - I closes Einthoven's triangle, and the augmented leads are Goldberger's, aVR = -(I + II)/2, aVL = I - II/2, aVF = II - I/2. A lead that is already present is kept untouched, because a measured aVF is not exactly II - I/2 and recomputing it would discard the real recording; only a missing lead is derived. The precordials cannot be derived from the limb leads and are carried only when present.</p>
+    <p>The frontal QRS axis is atan2 of the net QRS area in aVF (pointing at +90 degrees) against the net area in lead I (pointing at 0), in degrees. The net area of a lead is the signal integrated over the global QRS window with the straight isoelectric line between the onset and the offset removed, summed over the beats, so a lead that is a scaled copy of another has its area scaled by the same factor and the axis depends on the leads' shapes, not on the amplitude. The label follows the usual quadrants: normal from -30 to +90, left below -30, right above +90 to +180, extreme beyond -90.</p>
+    <p>The global PR, QRS and QT are measured on the superimposed leads, the rule the AHA states for a twelve-lead measurement: ecglab.delineate with Lead 'all' fuses the leads, so an onset is the earliest across them and an offset the latest, which makes a single-lead QT shorter than the global one. The reported interval is the median of that fused interval over the beats. The corrected QT is computed four ways from the global QT and the median RR, with RR in seconds and QT in ms: Bazett QT / sqrt(RR), Fridericia QT / RR^(1/3), Framingham QT + 154(1 - RR), Hodges QT + 1.75(HR - 60) with HR = 60 / RR; a reference prints the four because Bazett over-corrects at fast rates and under-corrects at slow ones.</p>
+    <p>When the precordials are present the Sokolow-Lyon voltage is reported: S in V1 plus the larger of R in V5 and R in V6, in mV, and whether it exceeds 3.5 mV (35 mm), the classical left ventricular hypertrophy voltage criterion. The measurement and the criterion are reported, never a diagnosis.</p>
+    <p>The normal struct carries the AHA/ACC/HRS reference ranges with a flag per measurement: PR 120 to 200 ms, QRS under 120 ms, QTc (Bazett) under 450 ms for men and 460 for women, and the frontal axis normal from -30 to +90 degrees.</p>
+    <p>Measured on this build, a ten second twelve-lead record at 500 Hz is measured in about 0.4 s, dominated by the delineation of the twelve leads.</p>
+  </description>
+  <used_function />
+  <bibliography>Kligfield et al., Recommendations for the standardization and interpretation of the electrocardiogram, Part I, Circulation 115:1306-1324, 2007; Mason et al., Part II, Circulation 115:1325-1332, 2007; Sokolow and Lyon, The ventricular complex in left ventricular hypertrophy, American Heart Journal 37:161-186, 1949.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% The frontal axis and the global intervals of a simulated twelve-lead record.
+recording = ecglab.simulate('Seconds', 20, 'Rate', 500, 'Leads', 12, 'Seed', 1);
+result = ecglab.leads(recording);
+result.axis.degrees]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% The limb leads derived from I and II, and the PR, QRS and QT beside their ranges.
+recording = ecglab.simulate('Seconds', 20, 'Rate', 500, 'Leads', {'I', 'II'}, 'Seed', 1);
+result = ecglab.leads(recording);
+result.derived.leads
+result.normal]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

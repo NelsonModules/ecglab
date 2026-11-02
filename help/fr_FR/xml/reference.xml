@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.reference</keyword>
+  <short_description>Recuperer un enregistrement d'une base ouverte et le lire.</short_description>
+  <syntax>
+    <syntax_item>recording = ecglab.reference(name)</syntax_item>
+    <syntax_item>recording = ecglab.reference(name, 'Annotations', which)</syntax_item>
+    <syntax_item>recording = ecglab.reference(name, 'Folder', folder, 'Download', tf)</syntax_item>
+    <syntax_item>names = ecglab.reference('list', 'Database', db)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>name</param_name>
+      <param_description>l'enregistrement, ecrit 'database/record' (comme 'mitdb/100', 'qtdb/sel100', 'ludb/1', 'ptbdb/patient001/s0010_re' ou 'ptb-xl/records500/00000/00001_hr'), ou 'list' pour rendre les noms d'enregistrements d'une base.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>which</param_name>
+      <param_description>l'annotateur charge dans recording.annotations : celui par defaut de la base sauf indication, et '' pour aucun.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>folder</param_name>
+      <param_description>ou les fichiers sont conserves, un sous-dossier par base ; le defaut est [prefdir(), '/ecglab_reference'].</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>tf</param_name>
+      <param_description>'Download' vrai (le defaut) recupere ce qui manque ; faux n'utilise que ce qui est sur le disque et signale ce qui manque.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>db</param_name>
+      <param_description>la base pour 'list' : l'une de mitdb, qtdb, nsrdb, afdb, nstdb, ludb, ptbdb, ptb-xl.</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>recording</param_name>
+      <param_description>l'enregistrement que rend ecglab.readwfdb, avec info.source, info.database, info.record et files (les chemins recuperes) renseignes, et recording.reference pour qtdb et ludb.</param_description>
+    </param_output_item>
+    <param_output_item>
+      <param_name>names</param_name>
+      <param_description>les noms d'enregistrements de la base, en cellstr colonne, pour qu'une mesure puisse tous les parcourir.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Chaque figure du module est mesuree sur les bases ouvertes, et un recuperateur qui ecrit un fichier sous un mauvais nom, garde un telechargement tronque, ou charge le mauvais annotateur corrompt en silence chacune de ces figures. Cette fonction recupere un enregistrement depuis PhysioNet dans un cache local et le lit avec <b>ecglab.readwfdb</b>, de sorte que le reste du module ne peut pas distinguer le resultat d'une lecture d'un fichier qu'un appelant avait deja en main.</p>
+    <p>Rien n'est redistribue. Les fichiers sont recuperes a la demande depuis PhysioNet et mis en cache sous le dossier de reference, qui est <b>[prefdir(), '/ecglab_reference']</b> par defaut, avec un sous-dossier par base et, pour la base de Lobachevsky, un sous-dossier data qui reflete le serveur. Avec 'Download' faux rien n'atteint le reseau et seul ce qui est deja sur le disque est lu.</p>
+    <p>Pour chaque enregistrement l'en-tete est recupere, puis chaque fichier de signal que l'en-tete nomme (un enregistrement peut repartir ses signaux sur plusieurs fichiers, et plusieurs signaux peuvent en partager un, donc un fichier nomme deux fois est recupere une fois), puis les fichiers d'annotations de la base : le .atr du comparateur de reference pour les bases d'arythmie, de rythme sinusal normal et de fibrillation auriculaire, les plusieurs annotateurs de la base QT (.atr .man .q1c .q2c .pu .pu0 .pu1), le .qrs de la base de fibrillation auriculaire, et un annotateur par derivation pour la base de Lobachevsky. Un fichier que le serveur n'a pas est ignore en silence quand il est facultatif (le q2c de la base QT, le qrsc de la fibrillation auriculaire) et est une erreur sinon. Chaque telechargement arrive a cote de son nom avec un suffixe .part et n'est deplace sur le nom qu'une fois entier, pour qu'un telechargement interrompu ne laisse jamais un fichier tronque a lire comme un enregistrement court pour toujours.</p>
+    <p>L'annotateur charge dans <b>recording.annotations</b> est celui par defaut de la base (.atr, ou q1c pour la base QT, ou la derivation ii pour la base de Lobachevsky, et aucun pour les bases PTB) sauf si 'Annotations' en nomme un autre, et aucun quand il vaut ''. Les bases QT et de Lobachevsky sont celles contre lesquelles une delineation est validee, donc chacun de leurs annotateurs present sur le disque est aussi lu dans <b>recording.reference</b> sous son propre nom, et une validation est libre de comparer un resultat a n'importe lequel.</p>
+    <p><b>ecglab.reference('list', 'Database', db)</b> rend les noms d'enregistrements d'une base. Les listes des bases fixes sont integrees ; celles des bases PTB comptent des milliers d'enregistrements et sont recuperees et mises en cache une fois. La base de fibrillation auriculaire liste vingt-cinq enregistrements, dont deux portent des annotations et aucun signal ; les vingt-trois qu'un lecteur peut ouvrir sont listes.</p>
+  </description>
+  <used_function>ecglab.readwfdb</used_function>
+  <bibliography>Goldberger et al., PhysioBank, PhysioToolkit, and PhysioNet, Circulation 101(23), 2000. Moody and Mark, The impact of the MIT-BIH Arrhythmia Database, IEEE Eng in Med and Biol 20(3), 2001. Laguna, Mark, Goldberger and Moody, A database for evaluation of algorithms for measurement of QT and other waveform intervals in the ECG, Computers in Cardiology 24, 1997. Moody and Mark, A new method for detecting atrial fibrillation using R-R intervals, Computers in Cardiology, 1983. Moody, Muldrow and Mark, A noise stress test for arrhythmia detectors, Computers in Cardiology 11, 1984. Bousseljot, Kreiseler and Schnabel, Nutzung der EKG-Signaldatenbank CARDIODAT der PTB ueber das Internet, 1995. Wagner et al., PTB-XL, a large publicly available electrocardiography dataset, Scientific Data 7, 2020. Kalyakulina et al., LUDB: a new open-access validation tool for electrocardiogram delineation algorithms, IEEE Access 8, 2020.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Le premier enregistrement de la base d'arythmie, recupere et lu.
+recording = ecglab.reference('mitdb/100');
+recording.info.source]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Parcourir toute une base depuis ce qui est deja sur le disque.
+names = ecglab.reference('list', 'Database', 'mitdb');
+for index = 1:numel(names)
+  recording = ecglab.reference(['mitdb/', names{index}], 'Download', false);
+end]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readwfdb">ecglab.readwfdb</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

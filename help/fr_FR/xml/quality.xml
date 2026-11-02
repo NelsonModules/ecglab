@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.quality</keyword>
+  <short_description>Juger la qualite du signal par fenetre, avec des indices et un verdict.</short_description>
+  <syntax>
+    <syntax_item>quality = ecglab.quality(X)</syntax_item>
+    <syntax_item>quality = ecglab.quality(X, 'Nom', valeur, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>un ecglab.recording (la derivation nommee par Lead est jugee, la premiere derivation de type ECG par defaut) ou un simple vecteur signal en millivolts dont la frequence d'echantillonnage est donnee par Rate.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Nom, valeur</param_name>
+      <param_description>options en paires nom et valeur, sans egard a la casse : Lead (la derivation a juger, un nom ou un indice de colonne, par defaut la premiere de MLII, II, I, V5, ou la premiere derivation), Rate (frequence en hertz, requise quand X est un vecteur), Window (longueur de fenetre en secondes, par defaut 10), Step (pas entre fenetres en secondes, par defaut la fenetre, de sorte que les fenetres ne se chevauchent pas ; un pas plus petit les fait se chevaucher), MatchWindow (la tolerance d'appariement du bSQI en secondes, par defaut 0.15), Detectors (les deux detecteurs de familles differentes que le bSQI compare, par defaut {'pantompkins', 'wqrs'} ; le premier est aussi celui que lisent les regles d'Orphanidou), BsqiThreshold (le bSQI minimal qu'une fenetre acceptable doit atteindre sous la regle bSQI, par defaut 0.9), Rule (ce que signifie acceptable : 'bsqi', 'orphanidou', 'both' par defaut, ou 'zhao').</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>quality</param_name>
+      <param_description>une structure : kind 'ecglab.quality', window, step, time (le centre de chaque fenetre en secondes), bsqi, ksqi, psqi, bassqi (une valeur par fenetre), orphanidou (un logique par fenetre), zhao (une etiquette par fenetre), acceptable (un logique par fenetre), usableFraction (la part des fenetres acceptables), good (la plus longue plage acceptable en secondes), et settings (tous les parametres utilises).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Un enregistrement est juge fenetre par fenetre, afin qu'un lecteur ou une analyse ulterieure garde les plages dignes de confiance et mette le reste de cote. Le signal est decoupe en fenetres de Window secondes avec un pas de Step secondes (le pas par defaut egale la fenetre, de sorte que les fenetres pavent sans chevauchement ; un pas plus petit les fait se chevaucher). Chaque fenetre recoit un jeu d'indices de qualite et un verdict. Les deux detecteurs dont le bSQI a besoin sont executes UNE SEULE fois sur tout le signal et leurs battements sont repartis dans les fenetres, de sorte que le cout de la detection est paye une fois quel que soit le nombre de fenetres, et non une fois par fenetre.</p>
+    <p>Le bSQI (Li, Mark et Clifford 2008) est l'accord de deux detecteurs de QRS de conception differente, comme le F1 de leurs battements apparies : avec n1 et n2 les battements places par les deux detecteurs dans la fenetre et M les paires qui s'apparient a moins de MatchWindow, il vaut 2 M / (n1 + n2). Deux detecteurs echouent de facons differentes, donc la ou ils s'accordent il y a un battement et la ou ils different la trace est douteuse ; une fenetre sans battement de l'un ni de l'autre vaut zero. La paire par defaut, Pan-Tompkins et la transformee de longueur de courbe, est de familles differentes a dessein.</p>
+    <p>Le kSQI est le kurtosis de la fenetre : un ECG propre est domine par le QRS bref et raide et fortement pointu, bien au-dela de la valeur gaussienne de trois (environ 23 sur le simulateur), tandis que le bruit blanc est gaussien et proche de trois. Le pSQI est la part de puissance spectrale dans la bande du QRS de 5 a 15 Hz contre la bande plus large de 5 a 40 Hz, elevee pour un complexe propre et faible pour un bruit a large bande. Le basSQI est la part de puissance au-dessus de 1 Hz sur le tout : la derive de ligne de base se trouve sous 1 Hz, donc une trace sans derive garde presque toute sa puissance au-dessus.</p>
+    <p>Les regles d'Orphanidou et al. (2015) produisent un logique par fenetre : la frequence cardiaque entre 40 et 180, aucun intervalle RR superieur a trois secondes, le plus long RR sur le plus court inferieur a 2.2, et la correlation moyenne des battements a leur modele moyen superieure a 0.66. Les trois premieres attrapent un rythme impossible, la derniere une fenetre dont les battements ne se ressemblent pas, ce que produisent le bruit ou une derivation mal connectee. Le rythme et les modeles sont lus sur le premier detecteur.</p>
+    <p>La fusion de Zhao et Zhang (2018) lit le kSQI, le pSQI et le basSQI contre les seuils de l'article (kurtosis au-dessus de 5, part de bande QRS entre 0.5 et 0.8, part au-dessus de la ligne de base au-dessus de 0.95) et renvoie Excellent quand les trois sont bons, Unacceptable quand les trois sont mauvais, et Barely acceptable entre les deux.</p>
+    <p>Le verdict, acceptable, est choisi par Rule : 'bsqi' demande que bsqi atteigne BsqiThreshold, 'orphanidou' demande les regles physiologiques, 'both' (par defaut) demande les deux, et 'zhao' garde une fenetre que la fusion ne qualifie pas d'Unacceptable. usableFraction est la part des fenetres acceptables ; good est la plus longue suite de fenetres acceptables consecutives exprimee en temps. Mesure sur un enregistrement simule de trente minutes a 360 Hz : quality coute 2.35 s contre 2.37 s pour ses deux detections seules, le decoupage, les spectres et les modeles n'ajoutant aucun temps mesurable (les detecteurs sont executes une fois). Sur l'enregistrement du Noise Stress Test 118e00, dont le bruit est ajoute par segments connus de deux minutes apres les cinq premieres minutes, la regle par defaut qualifie d'inacceptable chaque fenetre des segments bruites et seulement 3 pour cent des fenetres des segments propres.</p>
+  </description>
+  <used_function />
+  <bibliography>Li, Mark and Clifford, Robust heart rate estimation from multiple asynchronous noisy sources using signal quality indices and a Kalman filter, Physiological Measurement 29:15-32, 2008; Orphanidou, Bonnici, Charlton, Clifton, Vallance and Tarassenko, Signal-quality indices for the electrocardiogram and photoplethysmogram, IEEE Journal of Biomedical and Health Informatics 19:832-838, 2015; Zhao and Zhang, SQI quality evaluation mechanism of single-lead ECG signal based on simple heuristic fusion and fuzzy comprehensive evaluation, Frontiers in Physiology 9:727, 2018.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Deux minutes de signal simule propre : presque chaque fenetre est utilisable.
+recording = ecglab.simulate('Seconds', 120, 'Seed', 1);
+q = ecglab.quality(recording);
+fprintf('%.0f%% utilisable\n', 100 * q.usableFraction)]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Un debut propre et une fin bruitee : la plus longue bonne plage est le debut.
+recording = ecglab.simulate('Seconds', 180, 'Seed', 2);
+N = size(recording.samples, 1);
+third = round(2 * N / 3);
+recording.samples(third + 1:end, 1) = recording.samples(third + 1:end, 1) ...
+  + 0.5 * randn(N - third, 1);
+q = ecglab.quality(recording);
+good = q.good]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.validate">ecglab.validate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

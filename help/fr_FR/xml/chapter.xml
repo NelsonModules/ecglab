@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <module_name>ecglab</module_name>
+  <chapter>ecglab</chapter>
+  <chapter_description>
+    <p>Un laboratoire d'electrocardiographie pour Nelson : lire un electrocardiogramme depuis les formats ouverts (WFDB, EDF+, CSV, ISHNE), le nettoyer et evaluer sa qualite, trouver ses battements avec sept detecteurs mesures les uns contre les autres, delimiter ses ondes P, QRS et T et lire les intervalles, nommer chaque battement dans les cinq classes AAMI, trouver la fibrillation auriculaire, mesurer la variabilite de la frequence cardiaque selon les definitions du Task Force et les douze derivations, le dessiner sur papier calibre, sur une page de synthese et un battement a la fois, et imprimer un rapport ; et dire sur quel enregistrement et avec quel chiffre chaque affirmation a ete verifiee.</p>
+    <p>Chaque affirmation est mesuree sur une base de donnees ouverte, avec le script du repertoire data du module qui la reproduit. La detection des battements est mesuree sur la MIT-BIH Arrhythmia Database (le meilleur detecteur, elgendi, a 99,8 pour cent de sensibilite et 99,8 pour cent de predictivite positive sur les 48 enregistrements selon ANSI/AAMI EC57) ; la delimitation des ondes sur la QT Database face aux marques des cardiologues ; la classification des battements entre patients sur le decoupage de de Chazal (86,3 pour cent d'exactitude globale, les chiffres honnetes des classes rares indiques) ; et la fibrillation auriculaire sur l'AF Database (sensibilite par episode 75,6 pour cent, kappa de Cohen par seconde 0,935). Les nombres, leurs bases de donnees et leurs scripts sont dans le README et le repertoire data. Ce sont des mesures, jamais des constats cliniques.</p>
+    <p><b>Logiciel de recherche, pas un dispositif medical.</b> ecglab est destine a la recherche et a l'enseignement. Ce n'est pas un dispositif medical et il ne doit pas servir au diagnostic clinique, a la surveillance des patients, aux decisions de traitement, ni a aucune fin medicale.</p>
+  </chapter_description>
+</xmldoc>

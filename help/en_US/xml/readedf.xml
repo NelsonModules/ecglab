@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.readedf</keyword>
+  <short_description>Read a recording in the EDF or EDF+ format.</short_description>
+  <syntax>
+    <syntax_item>recording = ecglab.readedf(file)</syntax_item>
+    <syntax_item>recording = ecglab.readedf(file, 'Leads', which)</syntax_item>
+    <syntax_item>recording = ecglab.readedf(file, 'Annotations', tf)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>file</param_name>
+      <param_description>the path to the EDF or EDF+ file.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>which</param_name>
+      <param_description>the leads to return, by label (a char or a cellstr) or by index into the non annotation signals; by default every signal whose label names an ECG lead, and every signal when none does.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>tf</param_name>
+      <param_description>whether to read the 'EDF Annotations' signal into the recording's annotations (true by default).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>recording</param_name>
+      <param_description>the module's recording struct, the same one every other reader returns, so nothing downstream can tell an EDF file from a WFDB record.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>The EDF, EDF+, BDF and BDF+ binary format is read by the edf toolbox, a dependency of this module, so the header arithmetic and the little-endian (or BDF 24-bit) samples are handled in one place; this reader only maps the neutral struct it returns onto the ecglab recording. A stored integer becomes a physical value by <b>physical = (digital - dmin) * (pmax - pmin) / (dmax - dmin) + pmin</b>, and reading that arithmetic wrongly gives a signal that looks entirely plausible and is wrong.</p>
+    <p>Signals may be sampled at different rates. The selected leads are returned at the highest rate among them, the slower ones held sample by sample within each data record, and <b>recording.info.rates</b> keeps the native rate of each so a slow channel is not mistaken for a fast one resampled.</p>
+    <p>The 'EDF Annotations' signal is never returned as a lead; it is a byte stream, not a physiological channel. It carries time-stamped annotation lists (TALs): an onset with a sign, an optional duration after the byte 21, one or more texts separated by the byte 20, and the list ended by a zero. Each text becomes an annotation at sample <b>round(onset * rate) + 1</b>; a single PhysioNet symbol becomes the symbol, any other text becomes the note symbol with the text kept in aux, and a duration is kept in num, in samples. The first TAL of each record is a time stamp with an empty text and carries no annotation.</p>
+    <p>The patient field <b>X X X X</b> is the format's anonymous patient and becomes the subject <b>anonymous</b>. The start date and time go to <b>recording.info.startDate</b> (DD/MM/YYYY) and <b>recording.info.startTime</b> (HH.MM.SS) with startTimeKnown true; the two digit year is expanded with the format's rule, 85 to 99 being the 1900s and 00 to 84 the 2000s.</p>
+    <p>An EDF+D (discontinuous) file is read as if continuous, with <b>recording.info.discontinuous</b> true and a note in the comments, because the rest of the module works on one uniform timeline; the per-record gaps of such a file are not reconstructed.</p>
+  </description>
+  <used_function />
+  <bibliography>Kemp and Olivan, European data format 'plus' (EDF+), Clinical Neurophysiology 114(9), 2003; Kemp et al., A simple format for exchange of digitized polygraphic recordings, Electroencephalography and Clinical Neurophysiology 82(5), 1992.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Read an EDF file and copy it back out as EDF+.
+recording = ecglab.readedf('record.edf');
+ecglab.writeedf('copy.edf', recording);]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.writeedf">ecglab.writeedf</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

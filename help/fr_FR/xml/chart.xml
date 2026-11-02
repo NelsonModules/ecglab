@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.chart</keyword>
+  <short_description>Tracer la page de synthese d'un enregistrement.</short_description>
+  <syntax>
+    <syntax_item>handle = ecglab.chart(X)</syntax_item>
+    <syntax_item>handle = ecglab.chart(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>un ecglab.recording, qui est analyse avec ecglab.analyze, ou une ecglab.analysis deja calculee, tracee telle quelle de sorte que la page ne recalcule rien.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options en paires nom et valeur, comparees sans tenir compte de la casse : Visible ('on' par defaut ou 'off'), OutputImage (un fichier ou la page est enregistree), Title (un titre a vous, qui remplace la premiere ligne de l'entete), Lead (la derivation que trace la bande de rythme et que lisent les analyses, un nom ou un indice de colonne, utilisee seulement quand X est un enregistrement), Detector (le detecteur QRS transmis a ecglab.analyze, 'pantompkins' par defaut, utilise seulement quand X est un enregistrement).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>handle</param_name>
+      <param_description>la figure. Son UserData porte le plan, dont les comptes de classes et les nombres de tete que la page a traces, si bien qu'un appelant peut verifier la page contre l'analyse.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Ceci est une image d'une analyse, PAS un dossier clinique. ecglab est un logiciel de recherche et d'enseignement, pas un dispositif medical ; la page est tracee pour la recherche et l'education et ne doit pas servir au diagnostic, a la surveillance ni a aucun usage medical. Une mesure ici n'est jamais un constat clinique.</p>
+    <p>Une page imprimable sur fond clair. En haut, un entete nomme le sujet, la source, le debut et la duree quand ils sont connus et le detecteur, avec des tuiles qu'un lecteur saisit d'un coup d'oeil : la frequence cardiaque, le rythme avec la charge de fibrillation auriculaire, le PR, le QRS, le QT avec ses valeurs corrigees, l'axe frontal avec un petit diagramme vectoriel quand les douze derivations ont ete mesurees, et la qualite du signal. Chaque tuile porte la plage normale AHA/ACC/HRS sous forme de pastille la ou il en existe une ; une valeur hors de sa plage est signalee, jamais interpretee.</p>
+    <p>Puis les voies, toutes sur un seul axe de temps dont la grille s'aligne d'un bout a l'autre de la page : la bande de rythme (une derivation sur le papier millimetre), le tachogramme RR, les battements colores par leur classe AAMI a raison d'une ligne par classe N S V F Q, les episodes de rythme en bande, et la frequence cardiaque ; et sous un separateur qui le dit, la preuve du detecteur, la serie qu'il a seuillee et le seuil en vigueur a chaque echantillon, de sorte que la page montre POURQUOI les battements ont ete detectes. Une marge porte les comptes de classes, la synthese de la variabilite selon les definitions du Task Force et le trace de Poincare avec son ellipse SD1 et SD2.</p>
+    <p>Chaque remplissage est une image raster et chaque contour, graduation et trace est une seule ligne rompue par des NaN. La voie des battements en particulier est UNE image, jamais un polygone par battement : mesure sur cette version, un polygone est quadratique en nombre de faces, si bien qu'une page de quelques milliers de battements tracee en polygones couterait des minutes, tandis que le raster se trace une fois. Aucun controle n'est trace, donc la page imprimee et la page a l'ecran sont la meme page.</p>
+    <p>Chaque voie est un axe etiquete 'ecglab.chart.&lt;voie&gt;' (strip, tachogram, beats, episodes, rate, divider, evidence), partageant un seul axe de temps, les etiquettes de graduation sous la voie la plus basse seulement : une horloge murale quand l'enregistrement portait un vrai debut, le temps ecoule sinon. Chaque nombre de la page est un que ecglab.analyze a produit.</p>
+    <p>Mesure sur cette version, une page d'environ 2250 battements sur quinze minutes se trace en moins de 0,8 s : la voie des battements est une image et chaque trace une ligne, donc rien sur la page n'est un objet par battement.</p>
+  </description>
+  <used_function />
+  <bibliography>Task Force of the European Society of Cardiology and the North American Society of Pacing and Electrophysiology, Heart rate variability: standards of measurement, physiological interpretation, and clinical use, Circulation 93:1043-1065, 1996.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% La page de synthese d'un enregistrement simule avec une salve ectopique, en PNG.
+recording = ecglab.simulate('Seconds', 120, 'Ectopic', 0.1, 'Seed', 1);
+handle = ecglab.chart(recording, 'OutputImage', [tempdir(), '/summary.png']);]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Analyser une fois, puis tracer la page depuis l'analyse pour ne pas analyser deux fois.
+recording = ecglab.simulate('Seconds', 60, 'Rate', 500, 'Leads', 12, 'Seed', 2);
+analysis = ecglab.analyze(recording);
+ecglab.chart(analysis);]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.analyze">ecglab.analyze</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.strip">ecglab.strip</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.report">ecglab.report</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

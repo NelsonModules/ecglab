@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.validate</keyword>
+  <short_description>Compare a detector against the truth, by ANSI/AAMI EC57.</short_description>
+  <syntax>
+    <syntax_item>agreement = ecglab.validate(test, reference)</syntax_item>
+    <syntax_item>agreement = ecglab.validate(test, reference, name, value)</syntax_item>
+    <syntax_item>agreement = ecglab.validate(agreements)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>test</param_name>
+      <param_description>what a detector produced: a beats struct from ecglab.detect, an annotations struct, or a vector of sample indices (1-based) or, with 'Unit' 'seconds', of times.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>reference</param_name>
+      <param_description>the truth: an annotations struct, of which only the beat symbols are compared, or a vector.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>agreements</param_name>
+      <param_description>a cell array of agreements of one basis, to summarise over the records.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>name, value</param_name>
+      <param_description>options: 'Kind' what is compared ('beats'), 'Window' the matching window in seconds (0.15), 'Learning' the learning period in seconds (300), 'Rate' the sampling rate for a vector, 'Unit' 'samples' or 'seconds', 'Table' the class table for ecgLabAami ('bxb'), 'Record' a name kept in the result, 'Paced' whether the record is left out of the class statistics, 'Shutdown' whether a test NOISE mark opens a shutdown, 'ExcludePaced' whether the summary leaves the paced records out of the class figures.</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>agreement</param_name>
+      <param_description>a struct with kind 'ecglab.agreement'. For a record, basis 'beats': tp, fp, fn, se, ppv, the matched pairs, the missed and extra samples, the timing error and the RMS RR error in ms, the per class counts, the class matrix with its VEB and SVEB statistics, shutdownMissed, paced and the seconds compared. For a cell array, basis 'summary': the gross figures, the average figures, the per record table and its markdown.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>A laboratory that cannot be measured against the open databases is only an opinion. This is the comparator ANSI/AAMI EC57 prescribes, run beat by beat.</p>
+    <p>Each side is reduced to a sorted list of times. The first five minutes are the learning period and count on neither side, because the standard's comparison begins there. The two lists are then walked once with two indices: a test beat and a reference beat within the matching window of 150 ms are paired, and when two detections crowd one reference the nearer one is kept. What is left over is a miss on the reference side or an extra on the test side. Sensitivity is tp / (tp + fn) and positive predictivity tp / (tp + fp), undefined rather than zero when their denominator is empty.</p>
+    <p>Only the beat symbols of the reference are compared; a rhythm or quality mark is ignored. Four records of the arrhythmia database are paced and the standard leaves them out of the class statistics, which the comparator reads from the reference itself. A detector may declare a shutdown on a stretch it refuses to score, and a reference beat inside it is counted apart rather than as a false negative.</p>
+    <p>When the test carries a class per beat, the confusion matrix is built and with it the ventricular (VEB) and supraventricular (SVEB) detection statistics, V and S each against the rest, the fusion beats left out of the VEB figures as the standard asks.</p>
+    <p>A summary over a database reports two figures that answer different questions. The gross figure pools every beat and then takes the rate, so a long record weighs more; the average figure takes the rate of each record and then the mean, so every record weighs the same. A detector good on average but poor gross is good on the easy records and loses the hard ones.</p>
+  </description>
+  <used_function />
+  <bibliography>ANSI/AAMI EC57, Testing and reporting performance results of cardiac rhythm and ST segment measurement algorithms.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% A synthetic record whose every beat is known, and a detector made of that
+% truth shifted by 20 ms: the agreement is perfect after the learning period.
+recording = ecglab.simulate('Seconds', 600, 'Seed', 1);
+shift = round(0.02 * recording.rate);
+test = recording.annotations.sample + shift;
+agreement = ecglab.validate(test, recording.annotations, ...
+  'Rate', recording.rate, 'Record', 'synthetic')]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.readwfdb">ecglab.readwfdb</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.demo</keyword>
+  <short_description>The guided tour: run the whole module end to end and say what it found.</short_description>
+  <syntax>
+    <syntax_item>ecglab.demo()</syntax_item>
+    <syntax_item>ecglab.demo('Name', value, ...)</syntax_item>
+    <syntax_item>analysis = ecglab.demo(...)</syntax_item>
+    <syntax_item>[analysis, text] = ecglab.demo(...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: Record (a recording from a reader or ecglab.simulate, a file path, or a 'database/record' name for ecglab.reference; '' by default, which simulates a recording), Seconds (the length of the simulated recording; default 30, used only when Record is ''), Seed (the seed of the simulated recording; default 7, used only when Record is ''), Detector (the beat detector the analysis uses; default 'pantompkins'), Draw (draw and save the three reading pages; false by default), OutputDir (where the pages are saved when Draw is true; default the temporary directory), Visible ('off' by default, or 'on'), Language ('en' by default, or 'fr' for French without accents).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>analysis</param_name>
+      <param_description>the analysis from ecglab.analyze (kind 'ecglab.analysis'). With no output argument the tour is printed and nothing is returned.</param_description>
+    </param_output_item>
+    <param_output_item>
+      <param_name>text</param_name>
+      <param_description>the tour as a char array with newlines, when a second output is asked for.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>The guided tour is the one call that shows what ecglab does. It takes a recording, runs the whole analysis chain with <b>ecglab.analyze</b> (clean, quality, detect, delineate, classify, rhythm, heart rate variability, twelve-lead measurements), narrates in one line each what every stage found, and ends by printing the study report of <b>ecglab.report</b>. With no Record it simulates a twelve-lead recording, so the tour runs anywhere, with no file and no network, and the leads, the frontal axis and the global intervals all run.</p>
+    <p>Every number the tour narrates is one ecglab.analyze produced; the tour recomputes nothing. Its text, like the report, opens with the research-only disclaimer, so the tour is never read without the sentence that this is not a medical device.</p>
+    <p>When Draw is true the tour also draws and saves the three reading pages, the calibrated strip (ecglab.strip), the summary chart (ecglab.chart) and the one-beat view (ecglab.beat), and names the files it wrote. Drawing needs an advanced-CLI session with a figure; by default the tour is a headless call that prints and draws nothing.</p>
+    <p>With no output argument the tour is printed and nothing is returned; with an output argument the analysis is returned and nothing is printed, so the tour can be run for a person or captured by a program.</p>
+    <p>Research software, not a medical device. ecglab is for research and education. It is not a medical device and must not be used for clinical diagnosis, patient monitoring, treatment decisions, or any medical purpose.</p>
+  </description>
+  <used_function />
+  <bibliography />
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Run the guided tour on a simulated recording and print it.
+ecglab.demo();]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Capture the analysis and the tour text without printing.
+[analysis, text] = ecglab.demo('Seconds', 20, 'Seed', 3);
+disp(text(1:80))]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.analyze">ecglab.analyze</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.report">ecglab.report</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.strip">ecglab.strip</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.chart">ecglab.chart</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.beat">ecglab.beat</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

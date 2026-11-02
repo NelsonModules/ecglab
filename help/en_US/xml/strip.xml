@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.strip</keyword>
+  <short_description>Draw the electrocardiogram on calibrated grid paper.</short_description>
+  <syntax>
+    <syntax_item>handle = ecglab.strip(X)</syntax_item>
+    <syntax_item>handle = ecglab.strip(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>an ecglab.recording, or a numeric signal vector whose sampling rate is given as Rate.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: Layout ('3x4' by default, the clinical page, or '6x2', '12x1', '1'), Lead (the lead of the single-lead layout, a name or a column index), RhythmLead (the lead of the 3x4 rhythm strip, 'II' by default), Seconds (the window in seconds the stacked and single layouts draw from the start), PanelSeconds (the window of one 3x4 panel, 2.5 by default), RhythmSeconds (the length of the 3x4 rhythm strip, 10 by default), Speed (millimetres per second, 25 by default), Gain (millimetres per millivolt, 10 by default), Style ('paper' by default, a salmon grid on cream; 'bw', a grey grid; 'monitor', a dark screen with a bright trace), Rate (the sampling rate, required when X is a vector), Visible ('on' by default or 'off'), OutputImage (a file the page is saved to), Title (a heading of your own).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>handle</param_name>
+      <param_description>the figure. Its UserData carries the plan: the page width and height in millimetres, the panels and their windows, and the speed and the gain, so a caller can measure the page it drew.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>This is a picture of a signal, NOT a clinical record. ecglab is research and teaching software, not a medical device; a strip is drawn for research and education and must not be used for diagnosis, monitoring or any medical purpose.</p>
+    <p>The page is drawn the way a clinical electrocardiograph prints one: a red grid ruled at 1 mm and, every fifth line, at 5 mm; a 1 mV calibration pulse at the start of each row; the trace at 25 mm/s and 10 mm/mV, so a small square is 0.04 s by 0.1 mV and a large one 0.2 s by 0.5 mV. The speed and the gain are printed on the page.</p>
+    <p>The calibration is real and it survives the saved file. The whole page is laid out in data units of MILLIMETRES: x is time times the speed and y is minus voltage times the gain, so a panel that shows S seconds is exactly S times Speed millimetres wide and a 1 mV deflection is exactly Gain millimetres tall. On this build the figure export ignores the paper size, so an SVG is instead rewritten to declare its size in the page's millimetres; a ruler laid on the printed or exported page then reads 25 mm/s and 10 mm/mV. A PNG carries no physical size a viewer honours and is written as is.</p>
+    <p>The default '3x4' layout is the clinical page: twelve panels in three rows and four columns, the rows I aVR V1 V4 / II aVL V2 V5 / III aVF V3 V6, each panel a 2.5 second window and the four columns the four consecutive slices of one ten second acquisition, with a full-width rhythm strip of lead II below. '6x2' places the limb leads in the left column and the precordial leads in the right; '12x1' stacks the twelve leads as one long strip each; '1' draws a single lead. A lead the recording does not carry is labelled and left blank rather than dropped, so the page keeps its shape.</p>
+    <p>Every panel is an axis tagged 'ecglab.strip.&lt;lead&gt;' (the rhythm strip 'ecglab.strip.rhythm'), over the page grid, holding that lead's trace; the page itself is 'ecglab.strip'. The trace is one line clipped to its panel, so a beat taller than the row runs off the paper as it does on a real electrocardiograph rather than into the row above. No control is drawn, so the printed page and the screen page are the same page.</p>
+    <p>Measured on this build, a ten second twelve-lead page draws in about 0.3 s and saves to SVG or PNG in well under a second: the grid is two broken lines and every trace one line, so nothing on the page is a per-cell fill.</p>
+  </description>
+  <used_function />
+  <bibliography>Kligfield et al., Recommendations for the standardization and interpretation of the electrocardiogram, Part I: the electrocardiogram and its technology, Circulation 115:1306-1324, 2007.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% The clinical twelve-lead page of a simulated record, saved as calibrated SVG.
+recording = ecglab.simulate('Seconds', 12, 'Rate', 500, 'Leads', 12, 'Seed', 1);
+handle = ecglab.strip(recording, 'OutputImage', [tempdir(), '/ecg.svg']);]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% A single lead stacked over ten seconds on the dark monitor style.
+recording = ecglab.simulate('Seconds', 10, 'Rate', 360, 'Seed', 2);
+ecglab.strip(recording, 'Layout', '1', 'Lead', 'II', 'Style', 'monitor');]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.demo</keyword>
+  <short_description>La visite guidee : executer tout le module de bout en bout et dire ce qui a ete trouve.</short_description>
+  <syntax>
+    <syntax_item>ecglab.demo()</syntax_item>
+    <syntax_item>ecglab.demo('Nom', valeur, ...)</syntax_item>
+    <syntax_item>analysis = ecglab.demo(...)</syntax_item>
+    <syntax_item>[analysis, text] = ecglab.demo(...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>Nom, valeur</param_name>
+      <param_description>options en paires nom et valeur, comparees sans tenir compte de la casse : Record (un enregistrement d'un lecteur ou de ecglab.simulate, un chemin de fichier, ou un nom 'base/enregistrement' pour ecglab.reference ; '' par defaut, ce qui simule un enregistrement), Seconds (la duree de l'enregistrement simule ; 30 par defaut, utilise seulement quand Record vaut ''), Seed (la graine de l'enregistrement simule ; 7 par defaut, utilise seulement quand Record vaut ''), Detector (le detecteur de battements de l'analyse ; 'pantompkins' par defaut), Draw (dessiner et enregistrer les trois pages de lecture ; false par defaut), OutputDir (ou les pages sont enregistrees quand Draw vaut true ; le repertoire temporaire par defaut), Visible ('off' par defaut, ou 'on'), Language ('en' par defaut, ou 'fr' pour le francais sans accents).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>analysis</param_name>
+      <param_description>l'analyse renvoyee par ecglab.analyze (kind 'ecglab.analysis'). Sans argument de sortie la visite est affichee et rien n'est renvoye.</param_description>
+    </param_output_item>
+    <param_output_item>
+      <param_name>text</param_name>
+      <param_description>la visite sous forme de tableau de caracteres avec des retours a la ligne, lorsqu'une deuxieme sortie est demandee.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>La visite guidee est l'appel unique qui montre ce que fait ecglab. Elle prend un enregistrement, execute toute la chaine d'analyse avec <b>ecglab.analyze</b> (nettoyage, qualite, detection, delimitation, classification, rythme, variabilite de la frequence cardiaque, mesures a douze derivations), raconte en une ligne chacune ce que chaque etape a trouve, et termine en affichant le rapport d'etude de <b>ecglab.report</b>. Sans Record elle simule un enregistrement a douze derivations, de sorte que la visite s'execute partout, sans fichier et sans reseau, et que les derivations, l'axe frontal et les intervalles globaux sont tous mesures.</p>
+    <p>Chaque nombre que la visite raconte est produit par ecglab.analyze ; la visite ne recalcule rien. Son texte, comme le rapport, commence par l'avertissement de recherche seulement, de sorte que la visite n'est jamais lue sans la phrase indiquant que ce n'est pas un dispositif medical.</p>
+    <p>Quand Draw vaut true la visite dessine et enregistre aussi les trois pages de lecture, la bande calibree (ecglab.strip), la page de synthese (ecglab.chart) et la vue d'un battement (ecglab.beat), et nomme les fichiers ecrits. Le dessin necessite une session en CLI avancee avec une figure ; par defaut la visite est un appel sans affichage graphique qui n'ouvre aucune fenetre.</p>
+    <p>Sans argument de sortie la visite est affichee et rien n'est renvoye ; avec un argument de sortie l'analyse est renvoyee et rien n'est affiche, de sorte que la visite peut etre executee pour une personne ou capturee par un programme.</p>
+    <p>Logiciel de recherche, pas un dispositif medical. ecglab est destine a la recherche et a l'enseignement. Ce n'est pas un dispositif medical et il ne doit pas servir au diagnostic clinique, a la surveillance des patients, aux decisions de traitement, ni a aucune fin medicale.</p>
+  </description>
+  <used_function />
+  <bibliography />
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Executer la visite guidee sur un enregistrement simule et l'afficher.
+ecglab.demo();]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Capturer l'analyse et le texte de la visite sans afficher.
+[analysis, text] = ecglab.demo('Seconds', 20, 'Seed', 3);
+disp(text(1:80))]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.analyze">ecglab.analyze</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.report">ecglab.report</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.strip">ecglab.strip</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.chart">ecglab.chart</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.beat">ecglab.beat</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

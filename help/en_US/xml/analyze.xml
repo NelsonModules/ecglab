@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.analyze</keyword>
+  <short_description>Run the whole analysis of a recording in one call.</short_description>
+  <syntax>
+    <syntax_item>analysis = ecglab.analyze(X)</syntax_item>
+    <syntax_item>analysis = ecglab.analyze(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>an ecglab.recording, or a path to a file ecglab can read. A path is dispatched by its extension: .hea or .dat to ecglab.readwfdb, .edf to ecglab.readedf, .csv or .txt to ecglab.readcsv, .ecg to ecglab.readishne. A bare record name of the form 'database/record' with no extension is fetched with ecglab.reference. A numeric signal matrix is accepted too, one column per lead, when its sampling rate is given as Rate.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: Clean (true by default, cleans the recording with ecglab.clean before analysing and keeps info.cleaning; false analyses it as read), Detector (the QRS detector, 'pantompkins' by default, passed to ecglab.detect as its Method), Prior (the classifier's class prior, 'empirical' by default or 'uniform', passed to ecglab.classify; 'uniform' lifts the minority-class sensitivity at the cost of overall accuracy), Lead (the lead the single-lead analyses read, a name or a column index; the default is the detector's own: MLII, II, I, V5, or the first lead), Do (a cellstr selecting which analyses to run, any of 'quality', 'detect', 'delineate', 'classify', 'rhythm', 'hrv', 'leads'; the default runs every one that applies), Rate (the sampling rate in hertz, required when X is a numeric matrix or a CSV file with no time column).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>analysis</param_name>
+      <param_description>one struct: kind 'ecglab.analysis'; recording (the recording, cleaned when Clean is true, with info.cleaning kept); quality (ecglab.quality); beats (ecglab.detect); waves (ecglab.delineate); classes (ecglab.classify); rhythm (ecglab.rhythm); hrv (ecglab.hrv); leads (ecglab.leads, only when the recording carries the limb leads I and II); summary (a flat struct of the headline numbers a report prints); and notes (a struct naming each analysis that did not run and why, in one line).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Research software, not a medical device. ecglab is for research and education. It is not a medical device and must not be used for clinical diagnosis, patient monitoring, treatment decisions, or any medical purpose.</p>
+    <p>One recording is read once and handed down a chain of analyses, so a report is built from a single call rather than from eight. The recording is cleaned once (unless Clean is false), and every analysis downstream reads the same cleaned trace, so the detector, the delineator and the quality all agree on what the signal is. The beats are detected once and the same struct is handed to the delineation, the classifier, the rhythm and the HRV, rather than each detecting again.</p>
+    <p>An analysis is a chain a real recording can break at any link: a dead lead carries no electrocardiogram, a record may be too short to learn a threshold on, a precordial-only set has no frontal plane. Each link is therefore wrapped so that one that cannot run leaves its field empty and writes a one-line reason into analysis.notes, rather than aborting the whole call, so the report still prints what did run. The one failure that stops the call is the recording that cannot be read, because there is then nothing to analyse.</p>
+    <p>Nothing is drawn: analyze is the measurement, and ecglab.report and the strip, chart and beat views are the drawing.</p>
+    <p>The summary is the flat set of numbers a report prints: heartRate (mean, min and max in bpm, from the beats); rhythm (the dominant per-beat label and the AF burden); intervals (the global PR, QRS, QT in ms and QTc by the four formulas, taken from the twelve-lead leads() measurement when the limb leads are present, else from the median of the single-lead delineation over the beats); axis (degrees and label, only when leads() ran); counts (the beats per AAMI class N, S, V, F, Q); hrv (SDNN, RMSSD, pNN50, LF/HF); quality (the usable fraction); and provenance (the recording name and source, the detector method and the Nelson build). A number an analysis did not produce is NaN (or empty for the axis), so a report can tell a missing measurement from a measured zero.</p>
+    <p>Measured on this build, a thirty minute single lead at 360 Hz (648000 samples) is analysed in about 7.5 s, which is the sum of its parts (the detection, the quality, the delineation, the classification, the rhythm and the HRV) with negligible overhead, because the one-call form detects the beats once and shares them rather than adding work of its own.</p>
+  </description>
+  <used_function />
+  <bibliography>Task Force of the European Society of Cardiology and the North American Society of Pacing and Electrophysiology, Heart rate variability, Circulation 93:1043-1065, 1996; de Chazal, O'Dwyer and Reilly, Automatic classification of heartbeats, IEEE TBME 51:1196-1206, 2004.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% The whole analysis of a simulated twelve-lead record in one call.
+recording = ecglab.simulate('Seconds', 60, 'Leads', 12, 'Seed', 1);
+analysis = ecglab.analyze(recording);
+analysis.summary.heartRate.mean]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Run only the beat detection and the variability, and see the rest noted.
+recording = ecglab.simulate('Seconds', 300, 'HeartRateStd', 5, 'Seed', 1);
+analysis = ecglab.analyze(recording, 'Do', {'detect', 'hrv'});
+analysis.summary.hrv
+analysis.notes]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.hrv">ecglab.hrv</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

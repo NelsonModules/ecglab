@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.hrv</keyword>
+  <short_description>Variabilite de la frequence cardiaque selon le Task Force.</short_description>
+  <syntax>
+    <syntax_item>hrv = ecglab.hrv(X)</syntax_item>
+    <syntax_item>hrv = ecglab.hrv(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>un ecglab.recording (ses battements sont detectes avec ecglab.detect sauf si une structure de battements est donnee par Beats), une structure ecglab.beats (sa serie rr est utilisee), ou un vecteur numerique lu comme des intervalles RR (Input 'rr', par defaut) ou comme des instants des pics R (Input 'peaks'), en secondes (Unit 'seconds', par defaut) ou en millisecondes (Unit 'ms').</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options sous forme de paires nom et valeur, sans distinction de casse : Beats (une structure de battements a utiliser au lieu de detecter, par defaut [] detecter), Input ('rr' par defaut ou 'peaks'), Unit ('seconds' par defaut ou 'ms'), Range ([bas haut] en secondes, les intervalles en dehors sont retires en premier, par defaut [0.3 2.0], [] le desactive), Ectopic (la regle qui signale un NN ectopique ou errone : 'none', 'malik' par defaut, 'karlsson', 'kamath', 'acar', ou une fraction numerique utilisee comme malik avec cette fraction), Interp (comment un NN retire est remplace : 'linear' par defaut, 'spline' ou 'none'), Method (l'estimateur spectral : 'welch' par defaut, 'lomb' ou 'ar'), Resample (frequence de reechantillonnage en hertz pour welch et ar, par defaut 4), Detrend (ordre du detrend pour welch et ar, par defaut 1 lineaire), Window (longueur de la fenetre de Welch en echantillons, une fenetre de Hann, par defaut 256), ArOrder (ordre du modele autoregressif, par defaut 16), ArMethod ('burg' par defaut ou 'yulewalker'), Segment (longueur de segment en secondes pour SDANN et l'index SDNN, par defaut 300), EntropyMax (la plus longue serie NN sur laquelle les entropies sont calculees, une serie plus longue est tronquee a ses EntropyMax premiers intervalles, par defaut 3000).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>hrv</param_name>
+      <param_description>une structure du modele de donnees : kind 'ecglab.hrv', avec les sous-structures 'time' (sdnn, sdann, sdnnIndex, rmssd, sdsd, nn50, pnn50, nn20, pnn20, meanNN, meanHR, triangularIndex, tinn, histogramBinWidth), 'frequency' (puissances ulf, vlf, lf, hf en ms^2 avec leurs frequences de pic, lfnu, hfnu, lfhf, totalPower), 'nonlinear' (sd1, sd2, sdRatio, ellipseArea, alpha1, alpha2, sampen, apen), 'nn' (la serie NN utilisee, en secondes, apres le traitement des ectopiques), 'rejected' (combien d'intervalles ont ete retires et par quelle regle) et 'settings' (la regle ectopique et son seuil, l'interpolation et sa frequence, le detrend, l'estimateur et sa fenetre, et les bandes).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Les definitions sont celles du Task Force de 1996 de la Societe europeenne de cardiologie et de la Societe nord-americaine de stimulation et d'electrophysiologie ; les mesures non lineaires suivent l'article de position de 2015. Chaque mesure est prise sur les intervalles normal a normal, donc deux filtres passent d'abord : un filtre de plage retire les intervalles physiquement impossibles, puis une regle ectopique nommee signale les intervalles qui s'ecartent trop de leurs voisins acceptes, car un battement manque ou en trop reduit de moitie ou double un intervalle et dominerait alors toute mesure de variabilite. Les intervalles signales sont interpoles ou retires.</p>
+    <p>Les mesures temporelles sont celles du standard : SDNN est l'ecart-type des intervalles NN, SDANN l'ecart des moyennes sur des segments de cinq minutes, l'index SDNN la moyenne des ecarts a l'interieur de ces segments, RMSSD la racine de la moyenne des carres des differences successives, NN50 et NN20 les nombres de differences superieures a 50 et 20 ms. Les mesures geometriques partagent un histogramme dont la largeur de classe est celle du standard, 1/128 s = 7.8125 ms : l'index triangulaire est le nombre de NN sur la classe la plus haute, et TINN est la base du triangle ajuste a l'histogramme par moindres carres.</p>
+    <p>Les mesures frequentielles sont les puissances dans les quatre bandes ULF (sous 0.003 Hz), VLF (0.003 a 0.04), LF (0.04 a 0.15) et HF (0.15 a 0.4 Hz), en ms^2, avec la frequence de pic de chaque bande, les unites normalisees de LF et HF, le rapport LF/HF et la puissance totale. La meme puissance de bande change avec l'estimateur, donc l'estimateur definit le nombre autant que la bande et est inscrit dans les settings. Welch et le modele autoregressif reechantillonnent la serie NN sur une grille uniforme par une spline cubique et la detrendent ; la spline est construite ici a partir de son systeme tridiagonal plutot que par le coeur, dont la spline est trop lente sur un long enregistrement. Lomb travaille sur la serie irreguliere sans reechantillonnage. Le spectre autoregressif est ajuste par la recursion de Burg ou par les equations de Yule-Walker et lu en forme close.</p>
+    <p>Les mesures non lineaires sont le diagramme de Poincare (SD1 en travers de la ligne d'identite, SD2 le long d'elle, leur rapport et l'aire de l'ellipse), l'analyse des fluctuations detrendees (l'exposant court terme alpha1 sur des boites de 4 a 16 battements et alpha2 sur 16 a 64), et les deux entropies (entropie d'echantillon et entropie approchee, dimension d'immersion 2 et tolerance 0.2 de l'ecart-type). Les entropies sont quadratiques en la longueur de la serie, donc une longue nuit est tronquee et la longueur utilisee est indiquee a cote.</p>
+    <p>Mesure sur l'enregistrement 16265 de la NSR Database (100243 battements sur une journee entiere, lus depuis ses propres annotations de reference) : SDNN 165 ms, RMSSD 39 ms, LF/HF 2.6, alpha1 1.26, entropie d'echantillon 1.04, en environ 5.5 s. Sur le simulateur, dont la serie RR est pilotee par un spectre bimodal de rapport de puissance LF/HF de 0.5, les estimateurs Welch, autoregressif et Lomb retrouvent un LF/HF de 0.53, 0.56 et 0.54 avec le pic LF proche de 0.10 Hz et le pic HF proche de 0.25 Hz.</p>
+  </description>
+  <used_function />
+  <bibliography>Task Force of the European Society of Cardiology and the North American Society of Pacing and Electrophysiology, Heart rate variability: standards of measurement, physiological interpretation and clinical use, Circulation 93:1043-1065, 1996 ; Sassi et al., Advances in heart rate variability signal analysis, Europace 17:1341-1353, 2015 ; Brennan, Palaniswami and Kamen, Do existing measures of Poincare plot geometry reflect nonlinear features of heart rate variability?, IEEE Transactions on Biomedical Engineering 48(11):1342-1347, 2001 ; Peng et al., Quantification of scaling exponents and crossover phenomena in nonstationary heartbeat time series, Chaos 5(1):82-87, 1995 ; Richman and Moorman, Physiological time-series analysis using approximate entropy and sample entropy, American Journal of Physiology 278:H2039-H2049, 2000.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% HRV d'un enregistrement simule, avec le LF/HF plante retrouve.
+recording = ecglab.simulate('Seconds', 300, 'HeartRateStd', 5, 'Seed', 1);
+hrv = ecglab.hrv(recording);
+ratio = hrv.frequency.lfhf]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% HRV a partir d'une simple liste d'intervalles RR en millisecondes, avec
+% l'estimateur autoregressif et sans regle ectopique.
+rr = 800 + 40 * randn(512, 1);
+hrv = ecglab.hrv(rr, 'Unit', 'ms', 'Method', 'ar', 'Ectopic', 'none');
+hrv.time.sdnn]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.validate">ecglab.validate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.chart</keyword>
+  <short_description>Draw the summary page of a recording.</short_description>
+  <syntax>
+    <syntax_item>handle = ecglab.chart(X)</syntax_item>
+    <syntax_item>handle = ecglab.chart(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>an ecglab.recording, which is analysed with ecglab.analyze, or an ecglab.analysis already computed, which is drawn as it stands so the page recomputes nothing.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: Visible ('on' by default or 'off'), OutputImage (a file the page is saved to), Title (a heading of your own, replacing the first header line), Lead (the lead the rhythm strip draws and the analyses read, a name or a column index, used only when X is a recording), Detector (the QRS detector passed to ecglab.analyze, 'pantompkins' by default, used only when X is a recording).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>handle</param_name>
+      <param_description>the figure. Its UserData carries the plan, including the class counts and the headline numbers the page drew, so a caller can check the page against the analysis.</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>This is a picture of an analysis, NOT a clinical record. ecglab is research and teaching software, not a medical device; the page is drawn for research and education and must not be used for diagnosis, monitoring or any medical purpose. A measurement here is never a clinical finding.</p>
+    <p>One printable page on a light ground. Across the top a header names the subject, the source, the start and the length when they are known and the detector, with tiles a reader takes in at arm's length: the heart rate, the rhythm with the atrial-fibrillation burden, the PR, the QRS, the QT with its corrected values, the frontal axis with a small vector diagram when the twelve leads ran, and the signal quality. Each tile carries the AHA/ACC/HRS normal range as a chip where one applies; a value outside its range is flagged, never interpreted.</p>
+    <p>Then the lanes, all on one time axis whose grid lines up down the page: the rhythm strip (one lead on the paper grid), the RR tachogram, the beats coloured by their AAMI class on one row per class N S V F Q, the rhythm episodes as a band, and the heart rate; and under a divider that says so, the detector's evidence, the series it thresholded and the threshold in force at each sample, so the page shows WHY the beats were called. A margin carries the class counts, the HRV summary by the Task Force definitions and the Poincare plot with its SD1 and SD2 ellipse.</p>
+    <p>Every fill is an image raster and every outline, tick and trace is one line broken by NaN. The beats lane especially is ONE image, never one patch per beat: measured on this build a patch is quadratic in its face count, so a page of a few thousand beats drawn as patches would cost minutes, while the raster draws once. No control is drawn, so the printed page and the screen page are the same page.</p>
+    <p>Each lane is an axes tagged 'ecglab.chart.&lt;lane&gt;' (strip, tachogram, beats, episodes, rate, divider, evidence), sharing one time axis, the tick labels under the lowest lane only: a wall clock when the recording came with a real start time, elapsed time otherwise. Every number on the page is one ecglab.analyze produced.</p>
+    <p>Measured on this build, a page of about 2250 beats over fifteen minutes draws in under 0.8 s: the beats lane is one image and every trace one line, so nothing on the page is a per-beat object.</p>
+  </description>
+  <used_function />
+  <bibliography>Task Force of the European Society of Cardiology and the North American Society of Pacing and Electrophysiology, Heart rate variability: standards of measurement, physiological interpretation, and clinical use, Circulation 93:1043-1065, 1996.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% The summary page of a simulated record with an ectopic stretch, saved as PNG.
+recording = ecglab.simulate('Seconds', 120, 'Ectopic', 0.1, 'Seed', 1);
+handle = ecglab.chart(recording, 'OutputImage', [tempdir(), '/summary.png']);]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Analyse once, then draw the page from the analysis so it is not analysed twice.
+recording = ecglab.simulate('Seconds', 60, 'Rate', 500, 'Leads', 12, 'Seed', 2);
+analysis = ecglab.analyze(recording);
+ecglab.chart(analysis);]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.analyze">ecglab.analyze</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.strip">ecglab.strip</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.report">ecglab.report</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

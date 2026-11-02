@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.simulate</keyword>
+  <short_description>Synthesise an electrocardiogram whose truth is known.</short_description>
+  <syntax>
+    <syntax_item>recording = ecglab.simulate()</syntax_item>
+    <syntax_item>recording = ecglab.simulate('Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: Seconds (length in seconds, default 60), Rate (sampling rate in hertz, default 360), HeartRate (mean heart rate in bpm, default 60), HeartRateStd (heart rate spread in bpm, default 1), Amplitude (normal R peak in mV on lead II, default 1.0), Noise (white noise RMS in mV, default 0), Baseline (baseline wander amplitude in mV, default 0) at BaselineFrequency (default 0.2 Hz), Mains (mains hum amplitude in mV, default 0) at MainsFrequency (default 60 Hz), Ectopic (fraction of beats made premature ventricular, default 0), Fibrillation (true makes the whole record atrial fibrillation, default false), Leads (a lead count or a cellstr of lead names, default {'II'}), Seed (integer seed for reproducibility, default none).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>recording</param_name>
+      <param_description>an ecglab.recording with info.format 'simulated', its annotations filled from the truth, and a recording.truth struct (beats, rr, waves, classes, rhythm, settings).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>A simulated recording is the only one whose answer is known before any detector, delineator or classifier is run, so it is what they are checked against: the planted beats, the planted wave boundaries and the planted classes are the truth a result is scored on.</p>
+    <p>The morphology is the phase domain model of McSharry, Clifford, Tarassenko and Smith: each beat is a sum of five Gaussians of the phase theta, at the angles -pi/3, -pi/12, 0, pi/12, pi/2 for the P, Q, R, S and T waves, with the paper's default amplitudes and widths. The paper integrates an ordinary differential equation one sample at a time; this module never loops over samples, so the model is evaluated in CLOSED FORM instead: the phase of every sample is built from the beat times with cumsum and interp1, the Gaussian sum is evaluated on the whole vector at once, and the waveform is scaled so the normal R peak is the requested amplitude. The closed form is the same morphology the differential equation settles to, at a fraction of the cost and without the per sample loop the module forbids.</p>
+    <p>The RR series is the paper's bimodal spectrum: a low frequency Gaussian peak at 0.1 Hz and a high frequency one at 0.25 Hz, each of width 0.01 Hz, with the low to high power ratio 0.5. The series is realised by the inverse FFT of the spectrum with random phases and rescaled to the requested mean heart rate and spread, the heart rate spread in bpm turned into an RR spread in seconds by the delta method.</p>
+    <p>Ectopic beats are premature ventricular: moved earlier against their own preceding interval, with no P wave, a QRS three times wider and one and a half times taller, an inverted T, and a compensatory pause after them. Fibrillation makes the whole record irregular and P-less, with a fine f-wave near 6 Hz in the P wave's place. Several leads are the one beat seen from several angles, scaled by a fixed relative gain table (I 0.6, II 1.0, III 0.4, aVR -0.8, aVL 0.1, aVF 0.7, V1 -0.5, V2 0.4, V3 0.6, V4 0.8, V5 1.0, V6 1.2), the negative gains giving aVR and V1 their inverted look and V1 its upright S.</p>
+    <p>The wave boundaries in recording.truth.waves are the data model's twelve columns (Pon Ppeak Poff QRSon Q R S QRSoff J Ton Tpeak Toff), each onset and offset taken at one Gaussian width of the morphology, because a clinician marks a wave where it departs the baseline and, at the paper's widths, that boundary reproduces the textbook intervals (measured at 60 bpm: PR 147 ms, QRS 117 ms, QT 372 ms); a boundary on the Gaussian's wide tail would over-report every interval (a QRS of 164 ms, a QT of 489 ms). The P columns are NaN for an ectopic or fibrillating beat, which is the data model's valid "absent". The annotations are filled from the same truth, a rhythm mark at the first sample and one beat mark per R, so a simulated recording can be written to WFDB or EDF and validated like a downloaded one.</p>
+  </description>
+  <used_function />
+  <bibliography>McSharry, Clifford, Tarassenko and Smith, A dynamical model for generating synthetic electrocardiogram signals, IEEE Transactions on Biomedical Engineering 50(3):289-294, 2003.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Thirty seconds at 360 Hz, one in ten beats a PVC, a fixed seed.
+recording = ecglab.simulate('Seconds', 30, 'Ectopic', 0.1, 'Seed', 1);
+% The truth every analysis is scored against.
+beats = recording.truth.beats;
+classes = recording.truth.classes;]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Twelve leads of atrial fibrillation with some line hum.
+recording = ecglab.simulate('Leads', 12, 'Fibrillation', true, ...
+  'Mains', 0.05, 'Seed', 2);
+recording.truth.rhythm]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.classify">ecglab.classify</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

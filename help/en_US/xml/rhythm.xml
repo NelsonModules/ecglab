@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>en_US</language>
+  <keyword>ecglab.rhythm</keyword>
+  <short_description>Label the rhythm and find the atrial fibrillation episodes from the RR series.</short_description>
+  <syntax>
+    <syntax_item>rhythm = ecglab.rhythm(X)</syntax_item>
+    <syntax_item>rhythm = ecglab.rhythm(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>an ecglab.recording, whose beats are found with ecglab.detect unless Beats is given; an ecglab.beats struct; or a plain signal vector in millivolts whose sampling rate is given as Rate and whose beats are then detected.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options as name and value pairs, matched without regard to case: Beats (the beats to label, an ecglab.beats struct or a vector of 1-based sample indices), Method (the detection method when the beats are detected, default 'pantompkins'), Lead (the lead to detect on, a name or a column index), Rate (the sampling rate in hertz, required when X is a vector), Window (the moving window in beats, 'auto' being 128, capped at the beats of a short record), Step (the step between windows in beats, default 1), Waves (an ecglab.delineate output so the P-wave absence joins the conditions), MinEpisode (the shortest episode in seconds, default 30), Tolerance (the sample-entropy tolerance as a fraction of the mean RR, default 0.1), Cosen (the coefficient-of-sample-entropy threshold, default -1), Irregularity (the normalised RMSSD threshold, default 0.1) and Pabsent (the least share of a window's beats with an absent P wave for the P condition, default 0.5).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>rhythm</param_name>
+      <param_description>an ecglab.rhythm struct: kind 'ecglab.rhythm', episodes (a struct of column vectors onset and offset in seconds and label a cellstr in 'N', 'AFIB', 'AFL', 'other' that tile the analysed span), perBeat (a label per beat), afBurden (the share of the analysed time in atrial fibrillation) and settings (the window, the step, the thresholds, whether a delineation was used, the rate and the analysed span).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Atrial fibrillation is the irregular ventricular response to a fibrillating atrium: the RR series loses both its regularity and its short-range predictability, and the P wave disappears. A moving window of Window beats is called fibrillation only when three conditions hold at once on its RR series, because each alone is fooled by something the others catch. The coefficient of sample entropy (Lake and Moorman 2011) is above its threshold, so the series is unpredictable; the normalised root mean square of successive RR differences is above its threshold, so it is irregular; and, when a delineation is given as Waves, the P wave is absent on most of the window's beats.</p>
+    <p>The coefficient of sample entropy is the sample entropy at a template length of one, with a tolerance of a small fraction of the mean RR, plus a density term, the log of twice the tolerance minus the log of the mean RR (Lake and Moorman 2011). Because the tolerance here is a fraction of the mean RR, that density term is a constant, so the coefficient is the sample entropy shifted by a fixed offset; the number does not track the heart rate, but that independence comes from the relative tolerance itself (scaling every interval scales the tolerance with it, so the sample entropy is unchanged), not from the density term. A regular rhythm matches itself at almost every template and scores very low; fibrillation matches almost nowhere and scores near zero, which is why a threshold near minus one separates them. The thresholds are taken from the literature (survey section 5.8), never fitted to a test database, and they are kept in rhythm.settings.</p>
+    <p>Each beat takes the label of the majority of the windows that cover it, and the episodes are the maximal runs of one label. A run shorter than MinEpisode is smoothed away: a brief lapse to sinus inside a long fibrillation stretch is bridged so it does not split one episode into three, and a brief spurious fibrillation run is dropped so noise does not invent an episode. The burden is the share of the analysed span the fibrillation episodes hold. The detection and its episodes go straight to ecglab.validate with Kind 'episodes' for the ANSI/AAMI EC57 episode and duration statistics, measured on the AF Database by data/make_ecglab_rhythm.m. That basis scores one rhythm, atrial fibrillation, fixed: ecglab.validate owns its option set and carries no option to name another rhythm, so a 'Label' argument is refused as unknown.</p>
+    <p>Everything is computed over windows and beats, never over samples: the mean RR, the irregularity and the P-absence share of every window come from cumulative sums in one pass, and the entropy is evaluated only on the windows that already cleared the irregularity. Research software, not a medical device. ecglab is for research and education. It is not a medical device and must not be used for clinical diagnosis, patient monitoring, treatment decisions, or any medical purpose.</p>
+  </description>
+  <used_function />
+  <bibliography>Lake and Moorman, Accurate estimation of entropy in very short physiological time series: the problem of atrial fibrillation detection in implanted ventricular devices, American Journal of Physiology 300:H319-H325, 2011. Tateno and Glass, Automatic detection of atrial fibrillation using the coefficient of variation and density histograms of RR and deltaRR intervals, Medical and Biological Engineering and Computing 39:664-671, 2001.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Label a simulated fibrillation night and read its atrial fibrillation burden.
+recording = ecglab.simulate('Seconds', 90, 'Fibrillation', true, 'Seed', 7);
+rhythm = ecglab.rhythm(recording);
+fprintf('AF burden %.2f\n', rhythm.afBurden);]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Detect the rhythm of an AF Database record and score it against its marks.
+recording = ecglab.reference('afdb/04015');
+detected = ecglab.rhythm(recording);
+agreement = ecglab.validate(detected, recording, 'Kind', 'episodes');
+fprintf('duration Se %.2f  +P %.2f\n', agreement.durationSe, agreement.durationPpv);]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.validate">ecglab.validate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+  </see_also>
+</xmldoc>

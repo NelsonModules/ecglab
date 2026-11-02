@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.leads</keyword>
+  <short_description>Deriver les derivations standard et mesurer l'axe et les intervalles.</short_description>
+  <syntax>
+    <syntax_item>result = ecglab.leads(X)</syntax_item>
+    <syntax_item>result = ecglab.leads(X, 'Nom', valeur, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>un ecglab.recording qui porte les derivations des membres I et II (et idealement les precordiales V1 a V6), ou une matrice numerique avec une colonne par derivation dont la frequence d'echantillonnage est donnee par Rate et les noms de derivations par Leads.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Nom, valeur</param_name>
+      <param_description>options en paires nom et valeur, sans egard a la casse : Rate (la frequence d'echantillonnage en hertz, requise quand X est une matrice), Leads (les noms de derivations, un texte par colonne, requis quand X est une matrice), Sex ('male' par defaut ou 'female', qui choisit la limite normale du QTc : 450 ms pour les hommes, 460 ms pour les femmes), Beats (une structure de battements issue de ecglab.detect sur laquelle accrocher la delimitation ; en son absence les battements sont detectes avec la methode par defaut), Method (le detecteur utilise quand Beats est absent).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>result</param_name>
+      <param_description>une structure : kind 'ecglab.leads' ; derived (un ecglab.recording portant les derivations standard, les derivations augmentees et III completees a partir de I et II lorsqu'elles sont absentes) ; axis (une structure avec degrees et label, le label 'normal', 'left', 'right' ou 'extreme') ; intervals (une structure avec les pr, qrs et qt globaux en ms) ; qtc (une structure avec bazett, fridericia, framingham et hodges en ms) ; heartRate (battements par minute) ; sokolowLyon (une structure avec sV1, rV5, rV6, amplitude en mV et exceeds, presente seulement lorsque les precordiales sont presentes) ; et normal (une structure des plages de reference AHA/ACC/HRS avec un indicateur inRange par mesure).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Ce sont des mesures et leurs plages de reference, PAS un diagnostic. ecglab est un logiciel de recherche et d'enseignement, pas un dispositif medical ; une valeur hors d'une plage est signalee ici, jamais interpretee.</p>
+    <p>Les six derivations des membres sont des combinaisons lineaires exactes de I et II, de sorte qu'un enregistrement qui porte I et II les porte toutes : III = II - I ferme le triangle d'Einthoven, et les derivations augmentees sont celles de Goldberger, aVR = -(I + II)/2, aVL = I - II/2, aVF = II - I/2. Une derivation deja presente est conservee telle quelle, car un aVF mesure n'est pas exactement II - I/2 et le recalculer jetterait l'enregistrement reel ; seule une derivation manquante est derivee. Les precordiales ne peuvent pas etre derivees des derivations des membres et ne sont portees que lorsqu'elles sont presentes.</p>
+    <p>L'axe frontal du QRS est atan2 de l'aire nette du QRS en aVF (pointant a +90 degres) contre l'aire nette en derivation I (pointant a 0), en degres. L'aire nette d'une derivation est le signal integre sur la fenetre globale du QRS apres retrait de la ligne isoelectrique droite entre le debut et la fin, sommee sur les battements, de sorte qu'une derivation copie d'une autre a son aire mise a la meme echelle et que l'axe depend de la forme des derivations, pas de l'amplitude. Le label suit les quadrants usuels : normal de -30 a +90, gauche en dessous de -30, droit au-dessus de +90 jusqu'a +180, extreme au-dela de -90.</p>
+    <p>Les PR, QRS et QT globaux sont mesures sur les derivations superposees, la regle que l'AHA enonce pour une mesure a douze derivations : ecglab.delineate avec Lead 'all' fusionne les derivations, de sorte qu'un debut est le plus precoce et une fin la plus tardive parmi elles, ce qui rend un QT d'une seule derivation plus court que le QT global. L'intervalle rapporte est la mediane de cet intervalle fusionne sur les battements. Le QT corrige est calcule de quatre facons a partir du QT global et de la mediane du RR, avec RR en secondes et QT en ms : Bazett QT / sqrt(RR), Fridericia QT / RR^(1/3), Framingham QT + 154(1 - RR), Hodges QT + 1.75(HR - 60) avec HR = 60 / RR ; une reference imprime les quatre car Bazett surcorrige aux rythmes rapides et sous-corrige aux lents.</p>
+    <p>Lorsque les precordiales sont presentes, le voltage de Sokolow-Lyon est rapporte : S en V1 plus le plus grand de R en V5 et R en V6, en mV, et s'il depasse 3,5 mV (35 mm), le critere de voltage classique de l'hypertrophie ventriculaire gauche. La mesure et le critere sont rapportes, jamais un diagnostic.</p>
+    <p>La structure normal porte les plages de reference AHA/ACC/HRS avec un indicateur par mesure : PR 120 a 200 ms, QRS en dessous de 120 ms, QTc (Bazett) en dessous de 450 ms pour les hommes et 460 pour les femmes, et l'axe frontal normal de -30 a +90 degres.</p>
+    <p>Mesure sur cette version, un enregistrement a douze derivations de dix secondes a 500 Hz est mesure en environ 0,4 s, domine par la delimitation des douze derivations.</p>
+  </description>
+  <used_function />
+  <bibliography>Kligfield et al., Recommendations for the standardization and interpretation of the electrocardiogram, Part I, Circulation 115:1306-1324, 2007; Mason et al., Part II, Circulation 115:1325-1332, 2007; Sokolow and Lyon, The ventricular complex in left ventricular hypertrophy, American Heart Journal 37:161-186, 1949.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% L'axe frontal et les intervalles globaux d'un enregistrement simule a douze derivations.
+recording = ecglab.simulate('Seconds', 20, 'Rate', 500, 'Leads', 12, 'Seed', 1);
+result = ecglab.leads(recording);
+result.axis.degrees]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Les derivations des membres derivees de I et II, et les PR, QRS et QT avec leurs plages.
+recording = ecglab.simulate('Seconds', 20, 'Rate', 500, 'Leads', {'I', 'II'}, 'Seed', 1);
+result = ecglab.leads(recording);
+result.derived.leads
+result.normal]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>

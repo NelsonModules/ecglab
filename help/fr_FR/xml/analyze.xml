@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xmldoc>
+  <copyright>SAME AS NELSON SOFTWARE</copyright>
+  <language>fr_FR</language>
+  <keyword>ecglab.analyze</keyword>
+  <short_description>Executer toute l'analyse d'un enregistrement en un seul appel.</short_description>
+  <syntax>
+    <syntax_item>analysis = ecglab.analyze(X)</syntax_item>
+    <syntax_item>analysis = ecglab.analyze(X, 'Name', value, ...)</syntax_item>
+  </syntax>
+  <param_input>
+    <param_input_item>
+      <param_name>X</param_name>
+      <param_description>un ecglab.recording, ou un chemin vers un fichier que ecglab sait lire. Un chemin est oriente selon son extension : .hea ou .dat vers ecglab.readwfdb, .edf vers ecglab.readedf, .csv ou .txt vers ecglab.readcsv, .ecg vers ecglab.readishne. Un nom d'enregistrement de la forme 'database/record' sans extension est recupere avec ecglab.reference. Une matrice numerique de signaux est acceptee aussi, une colonne par derivation, quand sa frequence d'echantillonnage est donnee par Rate.</param_description>
+    </param_input_item>
+    <param_input_item>
+      <param_name>Name, value</param_name>
+      <param_description>options en paires nom et valeur, comparees sans tenir compte de la casse : Clean (vrai par defaut, nettoie l'enregistrement avec ecglab.clean avant l'analyse et garde info.cleaning ; faux l'analyse tel quel), Detector (le detecteur QRS, 'pantompkins' par defaut, passe a ecglab.detect comme son Method), Prior (l'a priori de classe du classifieur, 'empirical' par defaut ou 'uniform', passe a ecglab.classify ; 'uniform' fait remonter la sensibilite des classes rares au prix de l'exactitude globale), Lead (la derivation que lisent les analyses mono-derivation, un nom ou un indice de colonne ; par defaut celle du detecteur : MLII, II, I, V5, ou la premiere derivation), Do (un cellstr choisissant les analyses a executer, parmi 'quality', 'detect', 'delineate', 'classify', 'rhythm', 'hrv', 'leads' ; par defaut toutes celles qui s'appliquent), Rate (la frequence d'echantillonnage en hertz, requise quand X est une matrice numerique ou un fichier CSV sans colonne de temps).</param_description>
+    </param_input_item>
+  </param_input>
+  <param_output>
+    <param_output_item>
+      <param_name>analysis</param_name>
+      <param_description>une structure : kind 'ecglab.analysis' ; recording (l'enregistrement, nettoye quand Clean est vrai, avec info.cleaning garde) ; quality (ecglab.quality) ; beats (ecglab.detect) ; waves (ecglab.delineate) ; classes (ecglab.classify) ; rhythm (ecglab.rhythm) ; hrv (ecglab.hrv) ; leads (ecglab.leads, seulement quand l'enregistrement porte les derivations des membres I et II) ; summary (une structure plate des chiffres principaux qu'un rapport imprime) ; et notes (une structure nommant chaque analyse qui n'a pas tourne et pourquoi, en une ligne).</param_description>
+    </param_output_item>
+  </param_output>
+  <description>
+    <p>Logiciel de recherche, pas un dispositif medical. ecglab est destine a la recherche et a l'enseignement. Ce n'est pas un dispositif medical et il ne doit pas etre utilise pour un diagnostic clinique, une surveillance de patient, une decision de traitement, ou tout autre usage medical.</p>
+    <p>Un enregistrement est lu une seule fois et passe le long d'une chaine d'analyses, de sorte qu'un rapport est construit a partir d'un seul appel plutot que de huit. L'enregistrement est nettoye une fois (sauf si Clean est faux), et toutes les analyses en aval lisent la meme trace nettoyee, donc le detecteur, le delineateur et la qualite s'accordent sur ce qu'est le signal. Les battements sont detectes une fois et la meme structure est passee a la delineation, au classifieur, au rythme et a la variabilite, plutot que chacun redetecte.</p>
+    <p>Une analyse est une chaine qu'un enregistrement reel peut rompre a n'importe quel maillon : une derivation morte ne porte pas d'electrocardiogramme, un enregistrement peut etre trop court pour apprendre un seuil, un jeu precordial seul n'a pas de plan frontal. Chaque maillon est donc enveloppe de sorte qu'un maillon qui ne peut pas tourner laisse son champ vide et ecrit une raison d'une ligne dans analysis.notes, plutot que d'interrompre tout l'appel, afin que le rapport imprime quand meme ce qui a tourne. La seule defaillance qui arrete l'appel est l'enregistrement qui ne peut pas etre lu, car il n'y a alors rien a analyser.</p>
+    <p>Rien n'est dessine : analyze est la mesure, et ecglab.report et les vues strip, chart et beat sont le dessin.</p>
+    <p>Le resume est l'ensemble plat des chiffres qu'un rapport imprime : heartRate (moyenne, minimum et maximum en bpm, a partir des battements) ; rhythm (le label par battement dominant et la charge de FA) ; intervals (les PR, QRS, QT globaux en ms et le QTc par les quatre formules, tires de la mesure douze derivations leads() quand les derivations des membres sont presentes, sinon de la mediane de la delineation mono-derivation sur les battements) ; axis (degres et label, seulement quand leads() a tourne) ; counts (les battements par classe AAMI N, S, V, F, Q) ; hrv (SDNN, RMSSD, pNN50, LF/HF) ; quality (la fraction utilisable) ; et provenance (le nom et la source de l'enregistrement, la methode du detecteur et la version de Nelson). Un chiffre qu'une analyse n'a pas produit est NaN (ou vide pour l'axe), de sorte qu'un rapport distingue une mesure absente d'un zero mesure.</p>
+    <p>Mesure sur cette version, une derivation unique de trente minutes a 360 Hz (648000 echantillons) est analysee en environ 7,5 s, ce qui est la somme de ses parties (la detection, la qualite, la delineation, la classification, le rythme et la variabilite) avec un surcout negligeable, car la forme en un appel detecte les battements une fois et les partage plutot que d'ajouter du travail.</p>
+  </description>
+  <used_function />
+  <bibliography>Task Force of the European Society of Cardiology and the North American Society of Pacing and Electrophysiology, Heart rate variability, Circulation 93:1043-1065, 1996 ; de Chazal, O'Dwyer and Reilly, Automatic classification of heartbeats, IEEE TBME 51:1196-1206, 2004.</bibliography>
+  <examples>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% Toute l'analyse d'un enregistrement douze derivations simule en un appel.
+recording = ecglab.simulate('Seconds', 60, 'Leads', 12, 'Seed', 1);
+analysis = ecglab.analyze(recording);
+analysis.summary.heartRate.mean]]></example_item_data>
+    </example_item>
+    <example_item>
+      <example_item_type>nelson</example_item_type>
+      <example_item_description />
+      <example_item_data><![CDATA[% N'executer que la detection des battements et la variabilite, le reste note.
+recording = ecglab.simulate('Seconds', 300, 'HeartRateStd', 5, 'Seed', 1);
+analysis = ecglab.analyze(recording, 'Do', {'detect', 'hrv'});
+analysis.summary.hrv
+analysis.notes]]></example_item_data>
+    </example_item>
+  </examples>
+  <see_also>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.detect">ecglab.detect</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.delineate">ecglab.delineate</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.hrv">ecglab.hrv</link>
+    </see_also_item>
+    <see_also_item>
+      <link linkend="${ecglab}ecglab.simulate">ecglab.simulate</link>
+    </see_also_item>
+  </see_also>
+  <history>
+    <history_item>
+      <history_version>0.1.0</history_version>
+      <history_description>initial version</history_description>
+    </history_item>
+  </history>
+  <authors>
+    <author_item>Allan CORNET</author_item>
+  </authors>
+</xmldoc>
