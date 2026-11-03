@@ -80,11 +80,12 @@ function handle = strip(X, varargin)
   pixelsPerMm = 4;
   width = round(plan.Wmm * pixelsPerMm);
   height = round(plan.Hmm * pixelsPerMm);
-  % Built on a hidden figure and revealed once at the end.
+  % Built on a hidden figure and revealed once at the end. Cascaded so several
+  % pages open at once do not stack on the same spot and hide one another.
   handle = figure('Name', 'Nelson ecglab', 'NumberTitle', 'off', ...
   'Color', colour.background, 'Visible', 'off', ...
   'MenuBar', 'none', 'ToolBar', 'none', 'SelectionHighlight', 'off', ...
-  'Position', [40 40 width height]);
+  'Position', ecgLabFigurePosition(width, height));
   ecgLabStripPaper(handle, plan, colour);
   %===========================================================================
   % One transparent axis per panel over the grid, holding that lead's trace in
@@ -96,6 +97,7 @@ function handle = strip(X, varargin)
   if ~isempty(options.OutputImage)
     ecgLabStripSave(handle, options.OutputImage, plan);
   end
+  ecgLabFreezeView(handle);
   if strcmpi(options.Visible, 'on')
     set(handle, 'Visible', 'on');
   end

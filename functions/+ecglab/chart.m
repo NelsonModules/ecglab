@@ -70,10 +70,11 @@ function handle = chart(X, varargin)
   % Fixed 1400 by 1100 page on a light ground; lanes and margin are placed as
   % fractions of it.
   % The page is always built on a hidden figure and revealed once at the end.
+  % Cascaded so several pages open at once do not stack on the same spot.
   handle = figure('Name', 'Nelson ecglab', 'NumberTitle', 'off', ...
   'Color', colour.background, 'Visible', 'off', ...
   'MenuBar', 'none', 'ToolBar', 'none', 'SelectionHighlight', 'off', ...
-  'Position', [40 40 1400 1100]);
+  'Position', ecgLabFigurePosition(1400, 1100));
   %===========================================================================
   % Header and tiles, then the lanes (created, drawn, then their shared time
   % axis set last so a later child cannot move a limit), margin, footer.
@@ -90,6 +91,7 @@ function handle = chart(X, varargin)
   if ~isempty(options.OutputImage)
     saveas(handle, options.OutputImage);
   end
+  ecgLabFreezeView(handle);
   if strcmpi(options.Visible, 'on')
     set(handle, 'Visible', 'on');
   end

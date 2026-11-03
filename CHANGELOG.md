@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > teaching. It is not a medical device and must not be used for clinical
 > diagnosis, patient monitoring, treatment decisions, or any medical purpose.
 
+## [1.1.0] - 2026-11-03
+
+### Added
+
+- `ecglab.beat` takes a `'Blocking'` option. `true` (the default) keeps the call
+  open until the figure is closed; `false` returns at once with the controls
+  live, so a caller such as `ecglab.demo` can show a navigable beat view.
+- `ecglab.demo` opens the beat page with working navigation: the previous, next
+  and go-to controls and the left and right arrow keys move through the beats.
+
+### Changed
+
+- The demo's three pages (strip, chart and beat) open in a fixed cascade and in
+  an order that keeps the strip in front, so none hides another.
+- The reading pages (`strip`, `chart`, `beat`) freeze the view: zoom and pan are
+  disabled, so scrolling or dragging cannot break the 25 mm/s, 10 mm/mV
+  calibration.
+
+### Fixed
+
+- The strip's twelve lead panels now draw in the webview and wasm backends, not
+  only in Qt. The per-axes clip fix is in Nelson's graphics module; this release
+  removes the `'Clipping', 'off'` workaround.
+
 ## [1.0.0] - 2026-11-02
 
 First public release of `ecglab`. It has twenty-four functions. Each one has a

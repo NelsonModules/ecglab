@@ -39,10 +39,12 @@
 %     'Analysis'     an ecglab.analysis to pair with the recording X, so the
 %                    beats, waves and classes are not recomputed. 'Scoring' is
 %                    an accepted alias.
-%     'Interactive'  true (the default when 'Visible' is 'on') runs the control
-%                    loop, and the function then does not return until the
-%                    figure is closed; false draws once and returns, which is
-%                    what the tests and a console driving the second form use.
+%     'Interactive'  true (the default when 'Visible' is 'on') adds the previous,
+%                    next and go controls and the arrow keys; false draws once
+%                    with no controls, as the tests and the second form use.
+%     'Blocking'     true (the default) keeps the call open until the figure is
+%                    closed; false returns at once with the controls still live,
+%                    which lets a caller such as the demo show a navigable view.
 %     'Visible'      'on' (default) or 'off'.
 %     'OutputImage'  a file the current view is saved to, with no control in it.
 %     'Title'        a heading of your own, replacing the recording's name.
@@ -73,7 +75,8 @@ function handle = beat(X, varargin)
   %===========================================================================
   defaults = struct('Beat', [], 'At', [], 'Span', 1.2, ...
   'Detector', 'pantompkins', 'Analysis', [], 'Scoring', [], ...
-  'Interactive', [], 'Visible', 'on', 'OutputImage', '', 'Title', '');
+  'Interactive', [], 'Blocking', [], 'Visible', 'on', 'OutputImage', '', ...
+  'Title', '');
   options = ecgLabOptions(defaults, varargin);
   ecgLabBeatCheck(options);
   %===========================================================================
@@ -117,26 +120,40 @@ function handle = beat(X, varargin)
   %===========================================================================
   width = 1120;
   height = 640;
-  % Built on a hidden figure and revealed once.
+  % Built on a hidden figure and revealed once. Cascaded so several pages open
+  % at once do not stack on the same spot and hide one another.
   handle = figure('Name', 'Nelson ecglab', 'NumberTitle', 'off', ...
   'Color', colour.background, 'Visible', 'off', ...
   'MenuBar', 'none', 'ToolBar', 'none', 'SelectionHighlight', 'off', ...
-  'Position', [40 40 width height], 'Tag', 'ecglab.beat');
+  'Position', ecgLabFigurePosition(width, height), 'Tag', 'ecglab.beat');
   state.handles = ecgLabBeatObjects(handle, state);
   set(handle, 'UserData', state);
   %===========================================================================
   % Place the first view through the same mover every later step uses.
   ecgLabBeatMove(handle, start);
   %===========================================================================
-  % The interactive loop runs only on a visible figure and only when asked
-  % (default when visible). 'Interactive', false draws once and returns.
+  % An interactive, visible view gets the controls; the loop that keeps the call
+  % open until the figure closes runs only when blocking (the default).
   interactive = options.Interactive;
   if isempty(interactive)
     interactive = strcmpi(options.Visible, 'on');
   else
     interactive = logical(interactive(1));
   end
-  if interactive && strcmpi(options.Visible, 'on')
+  blocking = options.Blocking;
+  if isempty(blocking)
+    blocking = true;
+  else
+    blocking = logical(blocking(1));
+  end
+  showControls = interactive && strcmpi(options.Visible, 'on');
+  %===========================================================================
+  % Save a clean page (no controls) before the control bar is added.
+  if ~isempty(options.OutputImage)
+    ecgLabBeatSave(handle, options.OutputImage);
+  end
+  %===========================================================================
+  if showControls
     controls = ecgLabBeatControls(handle, state);
     state = get(handle, 'UserData');
     state.handles.controls = controls;
@@ -146,16 +163,13 @@ function handle = beat(X, varargin)
     set(state.handles.foot, 'Position', [0.035, 0.060, 0.930, 0.026]);
   end
   %===========================================================================
-  if ~isempty(options.OutputImage)
-    ecgLabBeatSave(handle, options.OutputImage);
-  end
-  %===========================================================================
+  ecgLabFreezeView(handle);
   % Reveal the finished view once, now every object is in place.
   if strcmpi(options.Visible, 'on')
     set(handle, 'Visible', 'on');
     drawnow();
   end
-  if interactive && strcmpi(options.Visible, 'on')
+  if showControls && blocking
     ecgLabBeatLoop(handle);
   end
 end

@@ -3,7 +3,7 @@
     "title":"Electrocardiography laboratory",
     "summary":"Read, analyse, classify, measure and report electrocardiograms, validated on the open databases.",
     "description":"An electrocardiography laboratory for Nelson: WFDB, EDF+, CSV and ISHNE in and out, preprocessing with a quality index, seven QRS detectors compared under ANSI/AAMI EC57, P-QRS-T delineation measured on the QT Database, AAMI beat classification, atrial fibrillation, heart rate variability by the Task Force definitions, the twelve-lead measurements, a calibrated strip, a summary page, a beat view and a report.",
-    "version":"1.0.0",
+    "version":"1.1.0",
     "keywords":[
         "ecg",
         "electrocardiogram",

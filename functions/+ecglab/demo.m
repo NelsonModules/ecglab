@@ -291,17 +291,54 @@ function saved = ecgLabDemoDraw(analysis, options)
   strip = ecgLabDemoJoin(outDir, 'ecglab_demo_strip.png');
   chart = ecgLabDemoJoin(outDir, 'ecglab_demo_chart.png');
   beat = ecgLabDemoJoin(outDir, 'ecglab_demo_beat.png');
+  % Create the strip last so it is frontmost in the webview (the last window
+  % opens on top); ecgLabDemoArrange sets the on-screen order for Qt.
+  hChart = ecglab.chart(analysis, 'Visible', visible, 'OutputImage', chart);
+  hBeat = ecglab.beat(analysis, 'Visible', visible, 'Interactive', true, ...
+  'Blocking', false, 'OutputImage', beat);
   hStrip = ecglab.strip(analysis.recording, 'Visible', visible, ...
   'OutputImage', strip);
-  hChart = ecglab.chart(analysis, 'Visible', visible, 'OutputImage', chart);
-  hBeat = ecglab.beat(analysis, 'Visible', visible, 'Interactive', false, ...
-  'OutputImage', beat);
   if strcmpi(visible, 'off')
     ecgLabDemoClose(hStrip);
     ecgLabDemoClose(hChart);
     ecgLabDemoClose(hBeat);
+  else
+    ecgLabDemoArrange(hChart, hBeat, hStrip);
   end
   saved = {strip, chart, beat};
+end
+%=============================================================================
+function ecgLabDemoArrange(hChart, hBeat, hStrip)
+  % Set the final positions after the pages are visible, largest-first in a
+  % diagonal cascade, so a backend's window manager cannot drop one onto another.
+  screen = get(0, 'ScreenSize');
+  screenHeight = screen(4);
+  if ~(isfinite(screenHeight) && screenHeight > 200)
+    screenHeight = 1080;
+  end
+  step = 100;
+  margin = 12;
+  pages = {hChart, hBeat, hStrip};
+  for k = 1:numel(pages)
+    h = pages{k};
+    if isempty(h) || ~isgraphics(h)
+      continue;
+    end
+    pos = get(h, 'Position');
+    width = pos(3);
+    height = pos(4);
+    left = margin + step * (k - 1);
+    top = screenHeight - margin - step * (k - 1);
+    set(h, 'Position', [left, top - height, width, height]);
+  end
+  % Raise in opening order so the frontmost page (the strip) ends on top.
+  for k = 1:numel(pages)
+    h = pages{k};
+    if ~isempty(h) && isgraphics(h)
+      figure(h);
+    end
+  end
+  drawnow();
 end
 %=============================================================================
 function path = ecgLabDemoJoin(directory, name)
